@@ -1,0 +1,12 @@
+{
+	"name": "Article Links",
+	"description": "See all links within an article on any page",
+	"version": "1.0",
+	"manifest_version": 3,
+	"content_scripts": [
+		{
+			"js": ["scripts/links.js"],
+			"matches": ["https://*/*", "http://*/*"]
+		}
+	]
+}
