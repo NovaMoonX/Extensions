@@ -1,4 +1,18 @@
-const CONTENT_CONTAINERS = ['p', 'li', 'ul li', 'ol li', 'blockquote', 'article p', 'section p'];
+const CONTENT_CONTAINERS = [
+	'p',
+	'li',
+	'ul li',
+	'ol li',
+	'blockquote',
+	'article p',
+	'section p',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+];
 
 function renderArticleLinks(article) {
 	if (!article) {
@@ -10,7 +24,7 @@ function renderArticleLinks(article) {
 	const selector = CONTENT_CONTAINERS.map((tag) => `${tag} a`).join(',');
 	const links = Array.from(article.querySelectorAll(selector));
 
-  const filteredLinks = Array.from(links).filter((link) => {
+	const filteredLinks = Array.from(links).filter((link) => {
 		const isFullLink = link.href && link.href.startsWith('http');
 		const isNotEmpty = link.textContent && link.textContent.trim().length > 0;
 		return isFullLink && isNotEmpty;
