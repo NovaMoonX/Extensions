@@ -1,0 +1,9 @@
+{
+  "name": "Google Results",
+  "description": "View Google search results in a simplified format.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "index.html"
+  }
+}
