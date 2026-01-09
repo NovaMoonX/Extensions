@@ -13,6 +13,11 @@ div[class="YViDd"]:has([role="heading"]) {
   display: none;
 }
 
+/* Remove bottom margin from sections that are now hidden */
+div[class="ULSxyf"] {
+  margin-bottom: 0px !important;
+}
+
 /* Scale result items */
 [data-rpos] {
   transform: scale(1.05);
@@ -24,3 +29,35 @@ div[class="YViDd"]:has([role="heading"]) {
   width: 30px !important;
   height: 30px !important;
 }
+
+/* Hide images included in result at the same level as header (example: Facebook results) */
+div[data-sncf]:has(img)  {
+  display: none !important;
+}
+/* And then fully expand the result description */
+[data-rpos] > [data-ved]:has(img) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Hide videos included in result, left-hand side */
+[data-rpos] a[aria-label] {
+  display: none !important;
+}
+/* And then fully expand the result description */
+[class="iHxmLe"]:has(a[aria-label]) {
+  max-width: 100% !important;
+}
+
+/* Wider column for results */
+/* or [id="center_col"] */
+div[role="main"] { 
+  /* min-width: fit-content !important;
+  max-width: 1300px !important; */
+  width: 1100px !important;
+  max-width: 90dvw !important;
+}
+
+/* [data-sncf="1"] {
+  white-space: nowrap !important;
+} */
