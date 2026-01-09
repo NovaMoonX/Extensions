@@ -3,7 +3,25 @@
   "description": "View Google search results in a simplified format.",
   "version": "1.0",
   "manifest_version": 3,
+  "permissions": [
+    "scripting",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "images/icon-16.png",
+    "32": "images/icon-32.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
   "action": {
-    "default_popup": "index.html"
+    "default_icon": {
+      "16": "images/icon-16.png",
+      "32": "images/icon-32.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    }
   }
 }

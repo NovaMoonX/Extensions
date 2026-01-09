@@ -1,0 +1,26 @@
+/* Hide sections indicated with data-rpos attribute that contain a header */
+[data-rpos]:has([role="heading"]) {
+  display: none;
+}
+
+/* Hide "People also search for" section */
+[data-abe] {
+  display: none;
+}
+
+/* Hide "Things to know" section */
+div[class="YViDd"]:has([role="heading"]) {
+  display: none;
+}
+
+/* Scale result items */
+[data-rpos] {
+  transform: scale(1.05);
+  transform-origin: top left;
+}
+
+/* Make web page badge larger (first img with data-atf) */
+[data-rpos] img[data-atf]:first-of-type {
+  width: 30px !important;
+  height: 30px !important;
+}
