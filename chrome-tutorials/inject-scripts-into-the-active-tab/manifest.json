@@ -4,6 +4,12 @@
 	"version": "1.0",
 	"manifest_version": 3,
 	"permissions": ["scripting", "activeTab"],
+	"content_scripts": [
+		{
+			"matches": ["https://www.google.com/search*"],
+			"js": ["navigation.js"]
+		}
+	],
 	"commands": {
 		"_execute_action": {
 			"suggested_key": {
