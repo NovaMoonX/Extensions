@@ -1,63 +1,55 @@
 /* Hide sections indicated with data-rpos attribute that contain a header */
-[data-rpos]:has([role="heading"]) {
-  display: none;
+[data-rpos]:has([role='heading']) {
+	display: none;
 }
 
 /* Hide "People also search for" section */
 [data-abe] {
-  display: none;
+	display: none;
 }
 
 /* Hide "Things to know" section */
-div[class="YViDd"]:has([role="heading"]) {
-  display: none;
+div[class='YViDd']:has([role='heading']) {
+	display: none;
 }
 
 /* Remove bottom margin from sections that are now hidden */
-div[class="ULSxyf"] {
-  margin-bottom: 0px !important;
+div[class='ULSxyf'] {
+	margin-bottom: 0px !important;
 }
 
 /* Scale result items */
 [data-rpos] {
-  transform: scale(1.05);
-  transform-origin: top left;
-}
-
-/* Make web page badge larger (first img with data-atf) */
-[data-rpos] img[data-atf]:first-of-type {
-  width: 30px !important;
-  height: 30px !important;
+	transform: scale(1.05);
+	transform-origin: top left;
 }
 
 /* Hide images included in result at the same level as header (example: Facebook results) */
-div[data-sncf]:has(img)  {
-  display: none !important;
+div[data-sncf]:has(img) {
+	display: none !important;
 }
 /* And then fully expand the result description */
 [data-rpos] > [data-ved]:has(img) {
-  width: 100% !important;
-  max-width: 100% !important;
+	width: 100% !important;
+	max-width: 100% !important;
 }
 
-/* Hide videos included in result, left-hand side */
-[data-rpos] a[aria-label] {
-  display: none !important;
+/* Hide videos included in result, left-hand side (example: Instagram) */
+[data-rpos] a[aria-label],
+[data-rpos] [data-vll] {
+	display: none !important;
 }
 /* And then fully expand the result description */
-[class="iHxmLe"]:has(a[aria-label]) {
-  max-width: 100% !important;
+[class='iHxmLe']:has(a[aria-label]),
+[class='iHxmLe']:has([data-vll]) {
+	max-width: 100% !important;
 }
 
 /* Wider column for results */
 /* or [id="center_col"] */
-div[role="main"] { 
-  /* min-width: fit-content !important;
+div[role='main'] {
+	/* min-width: fit-content !important;
   max-width: 1300px !important; */
-  width: 1100px !important;
-  max-width: 90dvw !important;
+	width: 1100px !important;
+	max-width: 90dvw !important;
 }
-
-/* [data-sncf="1"] {
-  white-space: nowrap !important;
-} */
