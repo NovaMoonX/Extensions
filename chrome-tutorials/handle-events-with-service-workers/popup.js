@@ -75,6 +75,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       showMessage('Suggestion saved successfully!', 'success');
 
+      // Clear the form
+      form.reset();
+      urlInput.value = '';
+
       // Close popup after brief delay
       setTimeout(() => {
         window.close();
