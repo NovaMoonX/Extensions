@@ -4,31 +4,48 @@
 		<link rel="stylesheet" href="popup.css" />
 	</head>
 	<body>
-		<h2>Add New Suggestion</h2>
+		<div id="formView">
+			<h2 id="formTitle">Add New Suggestion</h2>
 
-		<div id="message" class="message"></div>
+			<div id="message" class="message"></div>
 
-		<form id="suggestionForm">
-			<div class="form-group">
-				<label for="url">URL</label>
-				<input type="text" id="url" readonly />
+			<form id="suggestionForm">
+				<div class="form-group">
+					<label for="url">URL</label>
+					<input type="text" id="url" required />
+				</div>
+
+				<div class="form-group">
+					<label for="keyword">Keyword <span style="color: #666">(required)</span></label>
+					<input type="text" id="keyword" placeholder="e.g., myapp" required />
+				</div>
+
+				<div class="form-group">
+					<label for="description">Description <span style="color: #999">(optional)</span></label>
+					<input type="text" id="description" placeholder="e.g., Open My App" />
+				</div>
+
+				<div class="button-group">
+					<button type="submit" class="save" id="saveBtn">Save</button>
+					<button type="button" class="cancel" id="cancelBtn">Cancel</button>
+				</div>
+			</form>
+
+			<button id="viewAllBtn" class="view-all">View All Suggestions</button>
+		</div>
+
+		<div id="listView" class="hidden">
+			<div class="list-header">
+				<h2>Saved Go-To's</h2>
+				<button id="addNewBtn" class="add-new">+ Add New</button>
 			</div>
 
-			<div class="form-group">
-				<label for="keyword">Keyword <span style="color: #666">(required)</span></label>
-				<input type="text" id="keyword" placeholder="e.g., myapp" required />
+			<div class="search-container">
+				<input type="text" id="searchInput" placeholder="Search suggestions..." />
 			</div>
 
-			<div class="form-group">
-				<label for="description">Description <span style="color: #999">(optional)</span></label>
-				<input type="text" id="description" placeholder="e.g., Open My App" />
-			</div>
-
-			<div class="button-group">
-				<button type="submit" class="save">Save</button>
-				<button type="button" class="cancel" id="cancelBtn">Cancel</button>
-			</div>
-		</form>
+			<div id="suggestionsList" class="suggestions-list"></div>
+		</div>
 
 		<script src="popup.js"></script>
 	</body>

@@ -90,6 +90,163 @@ button.cancel:hover {
   display: block;
 }
 
+.hidden {
+  display: none;
+}
+
+.view-all {
+  width: 100%;
+  padding: 8px;
+  margin-top: 16px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.view-all:hover {
+  background-color: #e0e0e0;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.list-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.add-new {
+  /* padding: 6px 6px; */
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  /* flex-shrink: 0; */
+}
+
+.add-new:hover {
+  background-color: #7b40e2ff;
+}
+
+.search-container {
+  margin-bottom: 12px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 4px rgba(139, 92, 246, 0.3);
+}
+
+.suggestions-list {
+  max-height: 315px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.suggestion-keyword {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.suggestion-keyword:hover {
+  text-decoration: underline;
+  color: #8b5cf6;
+}
+
+.suggestion-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.suggestion-item:hover .suggestion-actions {
+  opacity: 1;
+}
+
+.edit-btn, .delete-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.edit-btn {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #7c3aed;
+}
+
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #dc2626;
+}
+
+.suggestion-description {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.suggestion-url {
+  font-size: 12px;
+  color: #999;
+  word-break: break-all;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #999;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #1e1e1e;
@@ -111,6 +268,17 @@ button.cancel:hover {
     box-shadow: 0 0 4px rgba(167, 139, 250, 0.5);
   }
 
+  #searchInput {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  #searchInput:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 4px rgba(167, 139, 250, 0.5);
+  }
+
   button.cancel {
     background-color: #2d2d2d;
     color: #e0e0e0;
@@ -128,5 +296,39 @@ button.cancel:hover {
   .message.error {
     background-color: #3d1f1f;
     color: #ff6b6b;
+  }
+
+  .view-all {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  .view-all:hover {
+    background-color: #3d3d3d;
+  }
+
+  .suggestion-item {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+
+  .suggestion-keyword {
+    color: #e0e0e0;
+  }
+
+  .suggestion-keyword:hover {
+    color: #a78bfa;
+  }
+
+  .suggestion-description {
+    color: #aaa;
+  }
+
+  .suggestion-url {
+    color: #888;
+  }
+
+  .empty-state {
+    color: #888;
   }
 }

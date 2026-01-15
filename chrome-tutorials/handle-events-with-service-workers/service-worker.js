@@ -3,6 +3,9 @@ import { isURL, normalizeURL } from './service-worker.util.js';
 console.log('sw-omnibox.js');
 
 const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
+const SUGGESTIONS_PROMPT_EXISTS = 'Select a go-to link or enter a new URL to create one.';
+const SUGGESTIONS_PROMPT_NONE =
+	'No go-to links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
 async function updateHistory(input) {
 	const { suggestionKeys, suggestionsMap } = await chrome.storage.local.get(['suggestionKeys', 'suggestionsMap']);
@@ -33,29 +36,35 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 	}
 });
 
-// Display the suggestions after user starts typing, following the keyword "MDD"
-chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
+chrome.omnibox.onInputStarted.addListener(async () => {
 	await chrome.omnibox.setDefaultSuggestion({
-		description: 'Enter a new link or choose from existing options',
+		description: SUGGESTIONS_PROMPT_EXISTS,
 	});
+});
 
-	// Get both default and custom suggestions
+// Display the suggestions after user starts typing, following the keyword "gt"
+chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 	const { suggestionKeys, suggestionsMap } = await chrome.storage.local.get(['suggestionKeys', 'suggestionsMap']);
 
 	const suggestions = suggestionKeys.map((api) => {
 		return { content: api, description: suggestionsMap[api]?.description || api };
 	});
+
 	const filteredSuggestions = suggestions.filter(
 		(suggestion) =>
 			suggestion.content.toLowerCase().includes(input.toLowerCase()) ||
 			suggestion.description.toLowerCase().includes(input.toLowerCase())
 	);
 
-  if (filteredSuggestions.length === 0) {
-    await chrome.omnibox.setDefaultSuggestion({
-      description: 'No matching go-to links. Enter a URL to create a new one or non-URL to simply search Google.',
-    });
-  }
+	if (filteredSuggestions.length === 0) {
+		await chrome.omnibox.setDefaultSuggestion({
+			description: SUGGESTIONS_PROMPT_NONE,
+		});
+	} else {
+		await chrome.omnibox.setDefaultSuggestion({
+			description: SUGGESTIONS_PROMPT_EXISTS,
+		});
+	}
 
 	suggest(filteredSuggestions);
 });
