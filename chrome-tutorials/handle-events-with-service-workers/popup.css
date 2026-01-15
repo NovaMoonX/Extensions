@@ -1,6 +1,6 @@
 body {
   width: 300px;
-  padding: 16px;
+  padding: 16px 16px 8px 16px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 14px;
 }
@@ -170,6 +170,25 @@ button.cancel:hover {
   border-left: 3px solid #d97706;
 }
 
+.shortcut-hint {
+  text-align: center;
+  font-size: 11px;
+  color: #999;
+  margin-top: 16px;
+  padding: 8px;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: monospace;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
 .suggestions-list {
   max-height: 315px;
   overflow-y: auto;
@@ -294,6 +313,16 @@ button.cancel:hover {
     color: #fbbf24;
     background-color: #78350f;
     border-left-color: #fbbf24;
+  }
+
+  .shortcut-hint {
+    color: #666;
+  }
+
+  kbd {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #aaa;
   }
 
   button.cancel {

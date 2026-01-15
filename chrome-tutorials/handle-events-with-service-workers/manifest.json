@@ -18,6 +18,15 @@
 		"default_title": "View your go-to's"
 	},
 	"minimum_chrome_version": "102",
+	"commands": {
+		"add-suggestion": {
+			"suggested_key": {
+				"default": "Ctrl+G",
+				"mac": "Alt+G"
+			},
+			"description": "Add current page as go-to link"
+		}
+	},
 	"omnibox": {
 		"keyword": "gt"
 	}

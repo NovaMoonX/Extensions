@@ -102,3 +102,16 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 
 	chrome.tabs.create({ url });
 });
+
+// Handle keyboard shortcut command
+chrome.commands.onCommand.addListener(async (command) => {
+	if (command === 'add-suggestion') {
+		// Get the current active tab
+		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+		if (tabs[0]?.url) {
+			// Store URL in session and open popup
+			await chrome.storage.session.set({ pendingUrl: tabs[0].url });
+			chrome.action.openPopup();
+		}
+	}
+});
