@@ -56,17 +56,32 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 			suggestion.description.toLowerCase().includes(input.toLowerCase())
 	);
 
-	if (filteredSuggestions.length === 0) {
+	// Check if there's an exact match (Chrome omnibox removes exact matches from suggestions)
+	const exactMatch = filteredSuggestions.find(
+		(suggestion) => suggestion.content.toLowerCase() === input.toLowerCase()
+	);
+
+	if (exactMatch) {
+		// Set exact match as default suggestion
+		await chrome.omnibox.setDefaultSuggestion({
+			description: exactMatch.description,
+		});
+		// Remove exact match from suggestions list to avoid duplication
+		const otherSuggestions = filteredSuggestions.filter(
+			(suggestion) => suggestion.content.toLowerCase() !== input.toLowerCase()
+		);
+		suggest(otherSuggestions);
+	} else if (filteredSuggestions.length === 0) {
 		await chrome.omnibox.setDefaultSuggestion({
 			description: SUGGESTIONS_PROMPT_NONE,
 		});
+		suggest([]);
 	} else {
 		await chrome.omnibox.setDefaultSuggestion({
 			description: SUGGESTIONS_PROMPT_EXISTS,
 		});
+		suggest(filteredSuggestions);
 	}
-
-	suggest(filteredSuggestions);
 });
 
 // Called after user accepts an option - Open the page of the chosen resource

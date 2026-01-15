@@ -133,7 +133,8 @@ button.cancel:hover {
   cursor: pointer;
   font-weight: 500;
   white-space: nowrap;
-  /* flex-shrink: 0; */
+  width: fit-content;
+  flex-grow: 0;
 }
 
 .add-new:hover {
