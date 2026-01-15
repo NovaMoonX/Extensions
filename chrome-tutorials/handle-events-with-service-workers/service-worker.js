@@ -34,7 +34,7 @@ chrome.omnibox.onInputStarted.addListener(async () => {
 // Display the suggestions after user starts typing, following the keyword "gt"
 chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 	// Get all suggestions from storage
-	const allItems = chrome.storage.sync.get(null);
+	const allItems = await chrome.storage.sync.get(null);
 	const suggestionKeys = Object.keys(allItems);
 
 	const suggestions = suggestionKeys.map((keyword) => {

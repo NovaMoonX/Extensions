@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadSuggestions(searchTerm = '') {
     // Get all suggestions from storage
-    const suggestionsMap = chrome.storage.sync.get(null);
+    const suggestionsMap = await chrome.storage.sync.get(null);
     const suggestionKeys = Object.keys(suggestionsMap);
 
     // Store all suggestions for filtering
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         editingKeyword = null;
         form.reset();
         window.close();
-      }, 1000);
+      }, 750);
     } catch (error) {
       console.error('Error saving suggestion:', error);
       showMessage('Error saving suggestion', 'error');
