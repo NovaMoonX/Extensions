@@ -13,9 +13,58 @@ document.addEventListener('DOMContentLoaded', async () => {
   const formTitle = document.getElementById('formTitle');
   const saveBtn = document.getElementById('saveBtn');
   const searchInput = document.getElementById('searchInput');
+  const keywordWarning = document.getElementById('keywordWarning');
 
   let editingKeyword = null;
   let allSuggestions = { keys: [], map: {} };
+
+  // Function to check if keyword exists
+  async function checkKeywordExists(keyword) {
+    const { suggestionsMap } = await chrome.storage.local.get('suggestionsMap');
+    return suggestionsMap && suggestionsMap[keyword];
+  }
+
+  // Real-time validation for keyword input
+  keywordInput.addEventListener('input', async (e) => {
+    const keyword = e.target.value
+    updateKeywordWarning(keyword);
+  });
+
+  // Update warning display for a given keyword
+  async function updateKeywordWarning(keyword) {
+    const trimmedKeyword = keyword.trim().toLowerCase();
+    
+    if (trimmedKeyword && trimmedKeyword !== editingKeyword) {
+      const exists = await checkKeywordExists(trimmedKeyword);
+      if (exists) {
+        keywordWarning.classList.remove('hidden');
+      } else {
+        keywordWarning.classList.add('hidden');
+      }
+    } else {
+      keywordWarning.classList.add('hidden');
+    }
+  }
+
+  // Function to extract suggestion fields from a URL
+  function extractSuggestionFields(urlString) {
+    try {
+      const url = new URL(urlString);
+      const hostname = url.hostname;
+      
+      let keyword = hostname.replace('www.', '');
+      keyword = keyword.split('.')[0];
+      keyword = keyword.toLowerCase();
+      
+      const capitalizedKeyword = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+      const description = `Open ${capitalizedKeyword}`;
+      
+      return { url: urlString, keyword, description };
+    } catch (error) {
+      console.error('Error parsing URL:', error);
+      return { url: urlString, keyword: '', description: '' };
+    }
+  }
 
   // Check if there's a pending URL from omnibox
   const { pendingUrl } = await chrome.storage.session.get('pendingUrl');
@@ -23,21 +72,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (pendingUrl) {
     // Show form view with pending URL
     showFormView();
-    urlInput.value = pendingUrl;
     
-    // Extract and suggest keyword from domain
-    try {
-      const url = new URL(pendingUrl);
-      const hostname = url.hostname;
-      
-      let suggestedKeyword = hostname.replace('www.', '');
-      suggestedKeyword = suggestedKeyword.split('.')[0];
-      suggestedKeyword = suggestedKeyword.toLowerCase();
-      
-      keywordInput.value = suggestedKeyword;
-    } catch (error) {
-      console.error('Error parsing URL:', error);
-    }
+    const { url, keyword, description } = extractSuggestionFields(pendingUrl);
+    urlInput.value = url;
+    keywordInput.value = keyword;
+    descriptionInput.value = description;
+    
+    // Check if pre-filled keyword matches existing
+    await updateKeywordWarning(keyword);
     
     descriptionInput.focus();
   } else {
@@ -177,9 +219,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadSuggestions(e.target.value);
   });
 
-  addNewBtn.addEventListener('click', () => {
+  addNewBtn.addEventListener('click', async () => {
     editingKeyword = null;
     form.reset();
+    
+    // Get the current active tab's URL
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]?.url) {
+        const { url, keyword, description } = extractSuggestionFields(tabs[0].url);
+        urlInput.value = url;
+        keywordInput.value = keyword;
+        descriptionInput.value = description;
+        
+        // Check if pre-filled keyword matches existing
+        await updateKeywordWarning(keyword);
+      }
+    } catch (error) {
+      console.error('Error getting current tab:', error);
+    }
+    
     showFormView(false);
     keywordInput.focus();
   });
@@ -203,9 +262,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       ]);
 
       // Check if keyword already exists (and we're not editing it)
+      // Note: Warning is shown inline via real-time validation
       if (suggestionsMap[keyword] && keyword !== editingKeyword) {
-        showMessage('This keyword already exists', 'error');
-        return;
+        // User is choosing to overwrite despite the warning
       }
 
       // If editing, remove old keyword
