@@ -38,7 +38,23 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 	const suggestionKeys = Object.keys(allItems);
 
 	const suggestions = suggestionKeys.map((keyword) => {
-		return { content: keyword, description: allItems[keyword]?.description || keyword };
+		const item = allItems[keyword];
+		const description = item?.description || '';
+		const url = item?.url ? `<dim> • <url>${item.url}</url></dim>` : '';
+		
+		// Highlight matched parts of keyword and description
+		const highlightMatches = (text) => {
+			const regex = new RegExp(`(${input})`, 'gi');
+			return text.replace(regex, '<match>$1</match>');
+		};
+		
+		const highlightedKeyword = highlightMatches(keyword);
+		const highlightedDescription = highlightMatches(description);
+		
+		return { 
+			content: keyword, 
+			description: `${highlightedKeyword} - ${highlightedDescription}${url}`
+		};
 	});
 
 	const filteredSuggestions = suggestions.filter(
