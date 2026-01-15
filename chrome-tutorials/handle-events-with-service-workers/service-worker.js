@@ -8,31 +8,20 @@ const SUGGESTIONS_PROMPT_NONE =
 	'No go-to links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
 async function updateHistory(input) {
-	const { suggestionKeys, suggestionsMap } = await chrome.storage.local.get(['suggestionKeys', 'suggestionsMap']);
+	const suggestion = await chrome.storage.sync.get(input);
 
 	// Update the suggestion's metadata
-	if (suggestionsMap[input]) {
-		suggestionsMap[input].timesUsed = (suggestionsMap[input].timesUsed || 0) + 1;
-		suggestionsMap[input].lastUsed = Date.now();
+	if (suggestion[input]) {
+		suggestion[input].timesUsed = (suggestion[input].timesUsed || 0) + 1;
+		suggestion[input].lastUsed = Date.now();
+		await chrome.storage.sync.set({ [input]: suggestion[input] });
 	}
-
-	// Move to front of suggestions list
-	const updatedKeys = suggestionKeys.filter((key) => key !== input);
-	updatedKeys.unshift(input);
-
-	return chrome.storage.local.set({
-		suggestionKeys: updatedKeys,
-		suggestionsMap,
-	});
 }
 
 // Save default API suggestions
 chrome.runtime.onInstalled.addListener(({ reason }) => {
 	if (reason === 'install') {
-		chrome.storage.local.set({
-			suggestionKeys: [],
-			suggestionsMap: {},
-		});
+		// No initialization needed - suggestions are stored directly
 	}
 });
 
@@ -44,10 +33,12 @@ chrome.omnibox.onInputStarted.addListener(async () => {
 
 // Display the suggestions after user starts typing, following the keyword "gt"
 chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
-	const { suggestionKeys, suggestionsMap } = await chrome.storage.local.get(['suggestionKeys', 'suggestionsMap']);
+	// Get all suggestions from storage
+	const allItems = chrome.storage.sync.get(null);
+	const suggestionKeys = Object.keys(allItems);
 
-	const suggestions = suggestionKeys.map((api) => {
-		return { content: api, description: suggestionsMap[api]?.description || api };
+	const suggestions = suggestionKeys.map((keyword) => {
+		return { content: keyword, description: allItems[keyword]?.description || keyword };
 	});
 
 	const filteredSuggestions = suggestions.filter(
@@ -86,14 +77,14 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 
 // Called after user accepts an option - Open the page of the chosen resource
 chrome.omnibox.onInputEntered.addListener(async (input) => {
-	// Get custom suggestions from storage
-	const { suggestionsMap } = await chrome.storage.local.get('suggestionsMap');
+	// Get custom suggestion
+	const result = await chrome.storage.sync.get(input);
 
 	let url;
 
 	// Check if input matches an existing suggestion
-	if (suggestionsMap[input]) {
-		url = suggestionsMap[input].url;
+	if (result[input]) {
+		url = result[input].url;
 		updateHistory(input);
 	} else if (isURL(input)) {
 		// Input is a URL - open it and show popup for creating suggestion

@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Function to check if keyword exists
   async function checkKeywordExists(keyword) {
-    const { suggestionsMap } = await chrome.storage.local.get('suggestionsMap');
-    return suggestionsMap && suggestionsMap[keyword];
+    const result = await chrome.storage.sync.get(keyword);
+    return result && result[keyword];
   }
 
   // Real-time validation for keyword input
@@ -109,10 +109,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadSuggestions(searchTerm = '') {
-    const { suggestionKeys = [], suggestionsMap = {} } = await chrome.storage.local.get([
-      'suggestionKeys',
-      'suggestionsMap'
-    ]);
+    // Get all suggestions from storage
+    const suggestionsMap = chrome.storage.sync.get(null);
+    const suggestionKeys = Object.keys(suggestionsMap);
 
     // Store all suggestions for filtering
     allSuggestions = { keys: suggestionKeys, map: suggestionsMap };
@@ -171,8 +170,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function handleEdit(e) {
     const keyword = e.target.dataset.keyword;
-    const { suggestionsMap } = await chrome.storage.local.get('suggestionsMap');
-    const suggestion = suggestionsMap[keyword];
+    const result = await chrome.storage.sync.get(keyword);
+    const suggestion = result[keyword];
 
     if (suggestion) {
       editingKeyword = keyword;
@@ -193,19 +192,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const { suggestionKeys = [], suggestionsMap = {} } = await chrome.storage.local.get([
-        'suggestionKeys',
-        'suggestionsMap'
-      ]);
-
-      // Remove from both structures
-      delete suggestionsMap[keyword];
-      const updatedKeys = suggestionKeys.filter(k => k !== keyword);
-
-      await chrome.storage.local.set({
-        suggestionKeys: updatedKeys,
-        suggestionsMap
-      });
+      // Remove suggestion from storage
+      await chrome.storage.sync.remove(keyword);
 
       loadSuggestions();
     } catch (error) {
@@ -256,43 +244,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const { suggestionKeys = [], suggestionsMap = {} } = await chrome.storage.local.get([
-        'suggestionKeys',
-        'suggestionsMap'
-      ]);
-
-      // Check if keyword already exists (and we're not editing it)
-      // Note: Warning is shown inline via real-time validation
-      if (suggestionsMap[keyword] && keyword !== editingKeyword) {
-        // User is choosing to overwrite despite the warning
-      }
-
       // If editing, remove old keyword
       if (editingKeyword && editingKeyword !== keyword) {
-        delete suggestionsMap[editingKeyword];
-        const index = suggestionKeys.indexOf(editingKeyword);
-        if (index > -1) {
-          suggestionKeys.splice(index, 1);
+        await chrome.storage.sync.remove(editingKeyword);
+      }
+
+      // Get existing data for this keyword (if updating)
+      const existingResult = await chrome.storage.sync.get(keyword);
+      const existingData = existingResult[keyword] || {};
+
+      // Save suggestion
+      await chrome.storage.sync.set({
+        [keyword]: {
+          url,
+          description: description || keyword,
+          timesUsed: existingData.timesUsed || 0,
+          lastUsed: existingData.lastUsed || Date.now()
         }
-      }
-
-      // Add/update suggestion
-      const existingData = suggestionsMap[keyword] || {};
-      suggestionsMap[keyword] = {
-        url,
-        description: description || keyword,
-        timesUsed: existingData.timesUsed || 0,
-        lastUsed: existingData.lastUsed || Date.now()
-      };
-
-      // Add keyword to list if not already there
-      if (!suggestionKeys.includes(keyword)) {
-        suggestionKeys.unshift(keyword);
-      }
-
-      await chrome.storage.local.set({
-        suggestionsMap,
-        suggestionKeys
       });
 
       // Clear session storage if this was from omnibox

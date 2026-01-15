@@ -1,7 +1,7 @@
 {
 	"name": "Go-To",
 	"description": "Uses the omnibox to quickly search your saved links",
-	"version": "1.1",
+	"version": "1.2",
 	"manifest_version": 3,
 	"icons": {
 		"16": "images/icon-16.png",
