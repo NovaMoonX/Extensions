@@ -1,4 +1,10 @@
-import { isURL, normalizeURL } from './service-worker.util.js';
+import {
+	isURL,
+	normalizeURL,
+	stripQueryParams,
+	hasFrequentVisits,
+	extractSuggestionFields,
+} from './service-worker.util.js';
 
 console.log('sw-omnibox.js');
 
@@ -41,19 +47,19 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 		const item = allItems[keyword];
 		const description = item?.description || '';
 		const url = item?.url ? `<dim> • <url>${item.url}</url></dim>` : '';
-		
+
 		// Highlight matched parts of keyword and description
 		const highlightMatches = (text) => {
 			const regex = new RegExp(`(${input})`, 'gi');
 			return text.replace(regex, '<match>$1</match>');
 		};
-		
+
 		const highlightedKeyword = highlightMatches(keyword);
 		const highlightedDescription = highlightMatches(description);
-		
-		return { 
-			content: keyword, 
-			description: `${highlightedKeyword} - ${highlightedDescription}${url}`
+
+		return {
+			content: keyword,
+			description: `${highlightedKeyword} - ${highlightedDescription}${url}`,
 		};
 	});
 
@@ -64,9 +70,7 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 	);
 
 	// Check if there's an exact match (Chrome omnibox removes exact matches from suggestions)
-	const exactMatch = filteredSuggestions.find(
-		(suggestion) => suggestion.content.toLowerCase() === input.toLowerCase()
-	);
+	const exactMatch = filteredSuggestions.find((suggestion) => suggestion.content.toLowerCase() === input.toLowerCase());
 
 	if (exactMatch) {
 		// Set exact match as default suggestion
@@ -127,6 +131,82 @@ chrome.commands.onCommand.addListener(async (command) => {
 		if (tabs[0]?.url) {
 			// Store URL in session and open popup
 			await chrome.storage.session.set({ pendingUrl: tabs[0].url });
+			chrome.action.openPopup();
+		}
+	}
+});
+
+// Track URL visits to detect frequent browsing patterns
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+	// Only track when the page has finished loading
+	if (changeInfo.status === 'complete' && tab.url) {
+		// Strip query parameters from URL
+		const urlWithoutParams = stripQueryParams(tab.url);
+
+		// Skip chrome:// and other internal URLs
+		if (urlWithoutParams.startsWith('chrome://') || urlWithoutParams.startsWith('chrome-extension://')) {
+			return;
+		}
+
+		// Get existing visit history for this URL
+		const historyKey = `visit_history_${urlWithoutParams}`;
+		const result = await chrome.storage.local.get(historyKey);
+		const visitTimestamps = result[historyKey] || [];
+
+		// Add current timestamp
+		visitTimestamps.push(Date.now());
+
+		// Clean up old timestamps (older than 24 hours)
+		const twentyFourHours = 24 * 60 * 60 * 1000;
+		const now = Date.now();
+		const recentVisits = visitTimestamps.filter((timestamp) => now - timestamp <= twentyFourHours);
+
+		// Save updated visit history
+		await chrome.storage.local.set({ [historyKey]: recentVisits });
+
+		// Check if URL has been visited frequently
+		if (hasFrequentVisits(recentVisits)) {
+			console.log(`Frequent visits detected for: ${urlWithoutParams}`);
+
+			// Check if URL is blocked from suggestions
+			const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+			if (blockedSuggestions.includes(urlWithoutParams)) {
+				// User blocked suggestions for this URL
+				return;
+			}
+
+			// Check if we already suggested this URL or if it already has a go-link
+			const suggestionKey = `suggested_${urlWithoutParams}`;
+			const alreadySuggested = await chrome.storage.local.get(suggestionKey);
+
+			if (alreadySuggested[suggestionKey]) {
+				// Already suggested this URL, don't suggest again
+				return;
+			}
+
+			const { keyword, description } = extractSuggestionFields(urlWithoutParams);
+
+			// Check if keyword already exists
+			const existing = await chrome.storage.sync.get(keyword);
+			if (existing[keyword]) {
+				// Already have a go-link for this, mark as suggested
+				await chrome.storage.local.set({ [suggestionKey]: true });
+				return;
+			}
+
+			// Store suggestion in session and open popup
+			await chrome.storage.session.set({
+				suggestedGoLink: {
+					url: urlWithoutParams,
+					keyword,
+					description,
+				},
+			});
+
+			// Mark as suggested so we don't suggest again
+			await chrome.storage.local.set({ [suggestionKey]: true });
+
+			// Open popup to show suggestion
 			chrome.action.openPopup();
 		}
 	}

@@ -1,3 +1,5 @@
+import { extractSuggestionFields } from './service-worker.util.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const urlInput = document.getElementById('url');
   const keywordInput = document.getElementById('keyword');
@@ -7,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const messageDiv = document.getElementById('message');
   const formView = document.getElementById('formView');
   const listView = document.getElementById('listView');
+  const suggestionView = document.getElementById('suggestionView');
   const viewAllBtn = document.getElementById('viewAllBtn');
   const addNewBtn = document.getElementById('addNewBtn');
   const suggestionsList = document.getElementById('suggestionsList');
@@ -14,9 +17,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('saveBtn');
   const searchInput = document.getElementById('searchInput');
   const keywordWarning = document.getElementById('keywordWarning');
+  
+  // Suggestion view elements
+  const suggestionPrompt = document.getElementById('suggestionPrompt');
+  const previewKeyword = document.getElementById('previewKeyword');
+  const previewDescription = document.getElementById('previewDescription');
+  const previewUrl = document.getElementById('previewUrl');
+  const createSuggestionBtn = document.getElementById('createSuggestionBtn');
+  const editSuggestionBtn = document.getElementById('editSuggestionBtn');
+  const cancelSuggestionBtn = document.getElementById('cancelSuggestionBtn');
+  const blockSuggestionBtn = document.getElementById('blockSuggestionBtn');
+
+  // Blocked URLs elements
+  const blockedSection = document.getElementById('blockedSection');
+  const blockedList = document.getElementById('blockedList');
 
   let editingKeyword = null;
   let allSuggestions = { keys: [], map: {} };
+  let suggestedData = null;
 
   // Function to check if keyword exists
   async function checkKeywordExists(keyword) {
@@ -46,30 +64,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Function to extract suggestion fields from a URL
-  function extractSuggestionFields(urlString) {
-    try {
-      const url = new URL(urlString);
-      const hostname = url.hostname;
-      
-      let keyword = hostname.replace('www.', '');
-      keyword = keyword.split('.')[0];
-      keyword = keyword.toLowerCase();
-      
-      const capitalizedKeyword = keyword.charAt(0).toUpperCase() + keyword.slice(1);
-      const description = `Open ${capitalizedKeyword}`;
-      
-      return { url: urlString, keyword, description };
-    } catch (error) {
-      console.error('Error parsing URL:', error);
-      return { url: urlString, keyword: '', description: '' };
-    }
-  }
-
-  // Check if there's a pending URL from omnibox
-  const { pendingUrl } = await chrome.storage.session.get('pendingUrl');
+  // Check if there's a pending URL from omnibox or a suggestion from frequent visits
+  const sessionData = await chrome.storage.session.get(['pendingUrl', 'suggestedGoLink']);
+  const { pendingUrl, suggestedGoLink } = sessionData;
   
-  if (pendingUrl) {
+  if (suggestedGoLink) {
+    // Show suggestion view for frequent visits
+    suggestedData = suggestedGoLink;
+    showSuggestionView(suggestedGoLink);
+  } else if (pendingUrl) {
     // Show form view with pending URL
     showFormView();
     
@@ -85,6 +88,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     // Show list view by default
     showListView();
+  }
+
+  function showSuggestionView(data) {
+    suggestionView.classList.remove('hidden');
+    formView.classList.add('hidden');
+    listView.classList.add('hidden');
+
+    suggestionPrompt.textContent = `You've visited this page frequently. Create a go-to link for quick access?`;
+    previewKeyword.textContent = data.keyword;
+    previewDescription.textContent = data.description;
+    previewUrl.textContent = data.url;
   }
 
   function showFormView(isEdit = false) {
@@ -103,15 +117,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   function showListView() {
     formView.classList.add('hidden');
     listView.classList.remove('hidden');
+    suggestionView.classList.add('hidden');
     searchInput.value = '';
     loadSuggestions();
+    loadBlockedUrls();
     searchInput.focus();
+  }
+
+  async function loadBlockedUrls() {
+    const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+
+    if (blockedSuggestions.length === 0) {
+      blockedSection.classList.add('hidden');
+      return;
+    }
+
+    blockedSection.classList.remove('hidden');
+    blockedList.innerHTML = blockedSuggestions
+      .map(url => `
+        <div class="blocked-item">
+          <div class="blocked-url" title="${url}">${url}</div>
+          <button class="unblock-btn" data-url="${url}">Unblock</button>
+        </div>
+      `)
+      .join('');
+
+    // Attach event listeners to unblock buttons
+    document.querySelectorAll('.unblock-btn').forEach(btn => {
+      btn.addEventListener('click', handleUnblock);
+    });
+  }
+
+  async function handleUnblock(e) {
+    const url = e.target.dataset.url;
+    const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+    
+    const updatedBlocked = blockedSuggestions.filter(blockedUrl => blockedUrl !== url);
+    await chrome.storage.sync.set({ blockedSuggestions: updatedBlocked });
+
+    // Reload the blocked URLs list
+    loadBlockedUrls();
   }
 
   async function loadSuggestions(searchTerm = '') {
     // Get all suggestions from storage
     const suggestionsMap = await chrome.storage.sync.get(null);
-    const suggestionKeys = Object.keys(suggestionsMap);
+    let suggestionKeys = Object.keys(suggestionsMap);
+
+    // Filter out non-suggestion keys like 'blockedSuggestions'
+    suggestionKeys = suggestionKeys.filter(key => 
+      key !== 'blockedSuggestions' && 
+      suggestionsMap[key] && 
+      typeof suggestionsMap[key] === 'object' && 
+      !Array.isArray(suggestionsMap[key])
+    );
 
     // Store all suggestions for filtering
     allSuggestions = { keys: suggestionKeys, map: suggestionsMap };
@@ -304,4 +363,74 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 3000);
     }
   }
+
+  // Suggestion view event handlers
+  createSuggestionBtn.addEventListener('click', async () => {
+    if (!suggestedData) return;
+
+    try {
+      // Save the suggested go-link
+      await chrome.storage.sync.set({
+        [suggestedData.keyword]: {
+          url: suggestedData.url,
+          description: suggestedData.description,
+          timesUsed: 0,
+          lastUsed: Date.now()
+        }
+      });
+
+      // Clear session storage
+      await chrome.storage.session.remove('suggestedGoLink');
+
+      // Show success message in form view
+      showFormView();
+      showMessage('Go-to link created!', 'success');
+
+      setTimeout(() => {
+        window.close();
+      }, 750);
+    } catch (error) {
+      console.error('Error creating suggestion:', error);
+    }
+  });
+
+  editSuggestionBtn.addEventListener('click', () => {
+    if (!suggestedData) return;
+
+    // Pre-fill form with suggested data
+    urlInput.value = suggestedData.url;
+    keywordInput.value = suggestedData.keyword;
+    descriptionInput.value = suggestedData.description;
+
+    showFormView(false);
+    keywordInput.focus();
+  });
+
+  cancelSuggestionBtn.addEventListener('click', async () => {
+    // Clear suggestion from session storage
+    await chrome.storage.session.remove('suggestedGoLink');
+    window.close();
+  });
+
+  blockSuggestionBtn.addEventListener('click', async () => {
+    if (!suggestedData) return;
+
+    try {
+      // Get current blocked list
+      const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+      
+      // Add URL to blocked list if not already there
+      if (!blockedSuggestions.includes(suggestedData.url)) {
+        blockedSuggestions.push(suggestedData.url);
+        await chrome.storage.sync.set({ blockedSuggestions });
+      }
+
+      // Clear suggestion from session storage
+      await chrome.storage.session.remove('suggestedGoLink');
+      
+      window.close();
+    } catch (error) {
+      console.error('Error blocking suggestion:', error);
+    }
+  });
 });

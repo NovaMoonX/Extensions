@@ -4,6 +4,33 @@
 		<link rel="stylesheet" href="popup.css" />
 	</head>
 	<body>
+		<div id="suggestionView" class="hidden">
+			<h2 id="suggestionTitle">Create go-to link?</h2>
+			<p id="suggestionPrompt" class="suggestion-prompt"></p>
+
+			<div class="suggestion-preview">
+				<div class="preview-field">
+					<label>Keyword</label>
+					<div id="previewKeyword" class="preview-value"></div>
+				</div>
+				<div class="preview-field">
+					<label>Description</label>
+					<div id="previewDescription" class="preview-value"></div>
+				</div>
+				<div class="preview-field">
+					<label>URL</label>
+					<div id="previewUrl" class="preview-value preview-url"></div>
+				</div>
+			</div>
+
+			<div class="button-group">
+				<button id="createSuggestionBtn" class="create">Create</button>
+				<button id="editSuggestionBtn" class="edit">Edit</button>
+				<button id="cancelSuggestionBtn" class="cancel">Cancel</button>
+			</div>
+			<button id="blockSuggestionBtn" class="block-suggestion">Don't suggest this again</button>
+		</div>
+
 		<div id="formView">
 			<h2 id="formTitle">Add New Suggestion</h2>
 
@@ -47,9 +74,15 @@
 			</div>
 
 			<div id="suggestionsList" class="suggestions-list"></div>
+			
+			<div id="blockedSection" class="blocked-section hidden">
+				<h3>Blocked Suggestions</h3>
+				<div id="blockedList" class="blocked-list"></div>
+			</div>
+
 			<div class="shortcut-hint">Tip: Press <kbd>Option+G</kbd> to quickly add current page</div>
 		</div>
 
-		<script src="popup.js"></script>
+		<script type="module" src="popup.js"></script>
 	</body>
 </html>
