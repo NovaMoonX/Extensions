@@ -6,8 +6,6 @@ import {
 	extractSuggestionFields,
 } from './service-worker.util.js';
 
-console.log('sw-omnibox.js');
-
 const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
 const SUGGESTIONS_PROMPT_EXISTS = 'Select a go-to link or enter a new URL to create one.';
 const SUGGESTIONS_PROMPT_NONE =
@@ -23,13 +21,6 @@ async function updateHistory(input) {
 		await chrome.storage.sync.set({ [input]: suggestion[input] });
 	}
 }
-
-// Save default API suggestions
-chrome.runtime.onInstalled.addListener(({ reason }) => {
-	if (reason === 'install') {
-		// No initialization needed - suggestions are stored directly
-	}
-});
 
 chrome.omnibox.onInputStarted.addListener(async () => {
 	await chrome.omnibox.setDefaultSuggestion({
@@ -137,77 +128,91 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 // Track URL visits to detect frequent browsing patterns
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-	// Only track when the page has finished loading
-	if (changeInfo.status === 'complete' && tab.url) {
-		// Strip query parameters from URL
-		const urlWithoutParams = stripQueryParams(tab.url);
+// Use webNavigation API to reliably detect only new navigations
+chrome.webNavigation.onCommitted.addListener(async (details) => {
+	const { tabId, url, transitionType, transitionQualifiers } = details;
 
-		// Skip chrome:// and other internal URLs
-		if (urlWithoutParams.startsWith('chrome://') || urlWithoutParams.startsWith('chrome-extension://')) {
+	// Only track main frame navigations (not iframes)
+	if (details.frameId !== 0) {
+		return;
+	}
+
+	// Skip reloads, back/forward navigation, and other non-new navigations
+	if (
+		transitionType === 'reload' ||
+		transitionType === 'auto_subframe' ||
+		transitionQualifiers.includes('forward_back')
+	) {
+		return;
+	}
+
+	// Strip query parameters from URL
+	const urlWithoutParams = stripQueryParams(url);
+
+	// Skip chrome:// and other internal URLs
+	if (urlWithoutParams.startsWith('chrome://') || urlWithoutParams.startsWith('chrome-extension://')) {
+		return;
+	}
+
+	// Get existing visit history for this URL
+	const historyKey = `visit_history_${urlWithoutParams}`;
+	const result = await chrome.storage.local.get(historyKey);
+	const visitTimestamps = result[historyKey] || [];
+
+	// Add current timestamp
+	visitTimestamps.push(Date.now());
+
+	// Clean up old timestamps (older than 24 hours)
+	const twentyFourHours = 24 * 60 * 60 * 1000;
+	const now = Date.now();
+	const recentVisits = visitTimestamps.filter((timestamp) => now - timestamp <= twentyFourHours);
+
+	// Save updated visit history
+	await chrome.storage.local.set({ [historyKey]: recentVisits });
+
+	// Check if URL has been visited frequently
+	if (hasFrequentVisits(recentVisits)) {
+		console.log(`Frequent visits detected for: ${urlWithoutParams}`);
+
+		// Check if URL is blocked from suggestions
+		const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+		if (blockedSuggestions.includes(urlWithoutParams)) {
+			// User blocked suggestions for this URL
 			return;
 		}
 
-		// Get existing visit history for this URL
-		const historyKey = `visit_history_${urlWithoutParams}`;
-		const result = await chrome.storage.local.get(historyKey);
-		const visitTimestamps = result[historyKey] || [];
+		// Check if we already suggested this URL or if it already has a go-link
+		const suggestionKey = `suggested_${urlWithoutParams}`;
+		const alreadySuggested = await chrome.storage.local.get(suggestionKey);
 
-		// Add current timestamp
-		visitTimestamps.push(Date.now());
-
-		// Clean up old timestamps (older than 24 hours)
-		const twentyFourHours = 24 * 60 * 60 * 1000;
-		const now = Date.now();
-		const recentVisits = visitTimestamps.filter((timestamp) => now - timestamp <= twentyFourHours);
-
-		// Save updated visit history
-		await chrome.storage.local.set({ [historyKey]: recentVisits });
-
-		// Check if URL has been visited frequently
-		if (hasFrequentVisits(recentVisits)) {
-			console.log(`Frequent visits detected for: ${urlWithoutParams}`);
-
-			// Check if URL is blocked from suggestions
-			const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
-			if (blockedSuggestions.includes(urlWithoutParams)) {
-				// User blocked suggestions for this URL
-				return;
-			}
-
-			// Check if we already suggested this URL or if it already has a go-link
-			const suggestionKey = `suggested_${urlWithoutParams}`;
-			const alreadySuggested = await chrome.storage.local.get(suggestionKey);
-
-			if (alreadySuggested[suggestionKey]) {
-				// Already suggested this URL, don't suggest again
-				return;
-			}
-
-			const { keyword, description } = extractSuggestionFields(urlWithoutParams);
-
-			// Check if keyword already exists
-			const existing = await chrome.storage.sync.get(keyword);
-			if (existing[keyword]) {
-				// Already have a go-link for this, mark as suggested
-				await chrome.storage.local.set({ [suggestionKey]: true });
-				return;
-			}
-
-			// Store suggestion in session and open popup
-			await chrome.storage.session.set({
-				suggestedGoLink: {
-					url: urlWithoutParams,
-					keyword,
-					description,
-				},
-			});
-
-			// Mark as suggested so we don't suggest again
-			await chrome.storage.local.set({ [suggestionKey]: true });
-
-			// Open popup to show suggestion
-			chrome.action.openPopup();
+		if (alreadySuggested[suggestionKey]) {
+			// Already suggested this URL, don't suggest again
+			return;
 		}
+
+		const { keyword, description } = extractSuggestionFields(urlWithoutParams);
+
+		// Check if keyword already exists
+		const existing = await chrome.storage.sync.get(keyword);
+		if (existing[keyword]) {
+			// Already have a go-link for this, mark as suggested
+			await chrome.storage.local.set({ [suggestionKey]: true });
+			return;
+		}
+
+		// Store suggestion in session and open popup
+		await chrome.storage.session.set({
+			suggestedGoLink: {
+				url: urlWithoutParams,
+				keyword,
+				description,
+			},
+		});
+
+		// Mark as suggested so we don't suggest again
+		await chrome.storage.local.set({ [suggestionKey]: true });
+
+		// Open popup to show suggestion
+		chrome.action.openPopup();
 	}
 });

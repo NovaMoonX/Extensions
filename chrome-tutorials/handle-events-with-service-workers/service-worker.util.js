@@ -65,14 +65,34 @@ export function hasFrequentVisits(visitTimestamps) {
 export function extractSuggestionFields(urlString) {
 	try {
 		const url = new URL(urlString);
-		const hostname = url.hostname;
+		let hostname = url.hostname;
 
-		let keyword = hostname.replace('www.', '');
-		keyword = keyword.split('.')[0];
-		keyword = keyword.toLowerCase();
+		// Remove 'www.' prefix if present
+		hostname = hostname.replace(/^www\./, '');
 
-		const capitalizedKeyword = keyword.charAt(0).toUpperCase() + keyword.slice(1);
-		const description = `Open ${capitalizedKeyword}`;
+		// Split hostname into parts
+		const parts = hostname.split('.');
+		
+		// Extract domain and subdomain
+		let keyword, capitalizedName;
+		
+		if (parts.length >= 3) {
+			// Has subdomain (e.g., docs.google.com)
+			const subdomain = parts[0];
+			const domain = parts[1];
+			
+			keyword = `${subdomain}-${domain}`.toLowerCase();
+			
+			const capitalizedSubdomain = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
+			const capitalizedDomain = domain.charAt(0).toUpperCase() + domain.slice(1);
+			capitalizedName = `${capitalizedDomain} ${capitalizedSubdomain}`;
+		} else {
+			// No subdomain (e.g., google.com)
+			keyword = parts[0].toLowerCase();
+			capitalizedName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+		}
+		
+		const description = `Open ${capitalizedName}`;
 
 		return { url: urlString, keyword, description };
 	} catch (error) {

@@ -382,9 +382,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Clear session storage
       await chrome.storage.session.remove('suggestedGoLink');
 
-      // Show success message in form view
-      showFormView();
-      showMessage('Go-to link created!', 'success');
+      // Hide all views
+      suggestionView.classList.add('hidden');
+      listView.classList.add('hidden');
+      
+      // Show formView but hide the form elements
+      formView.classList.remove('hidden');
+      form.style.display = 'none';
+      formTitle.style.display = 'none';
+      viewAllBtn.style.display = 'none';
+      document.querySelector('.shortcut-hint').style.display = 'none';
+      
+      // Show success message
+      messageDiv.textContent = 'Go-to link created!';
+      messageDiv.className = 'message success';
 
       setTimeout(() => {
         window.close();
@@ -394,13 +405,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  editSuggestionBtn.addEventListener('click', () => {
+  editSuggestionBtn.addEventListener('click', async () => {
     if (!suggestedData) return;
 
     // Pre-fill form with suggested data
     urlInput.value = suggestedData.url;
     keywordInput.value = suggestedData.keyword;
     descriptionInput.value = suggestedData.description;
+
+    // Clear session storage since user is now editing
+    await chrome.storage.session.remove('suggestedGoLink');
 
     showFormView(false);
     keywordInput.focus();
