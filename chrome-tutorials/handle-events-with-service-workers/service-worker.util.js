@@ -44,11 +44,18 @@ export function hasFrequentVisits(visitTimestamps) {
 
 	const now = Date.now();
 	const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+	const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
 	const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 	// Count visits in the last 30 minutes
 	const recentVisits = visitTimestamps.filter((timestamp) => now - timestamp <= thirtyMinutes);
 	if (recentVisits.length >= 3) {
+		return true;
+	}
+
+	// Count visits in the last hour
+	const hourlyVisits = visitTimestamps.filter((timestamp) => now - timestamp <= oneHour);
+	if (hourlyVisits.length >= 4) {
 		return true;
 	}
 

@@ -1,6 +1,6 @@
 {
-	"name": "Quick Links",
-	"description": "Save and search your links instantly using the omnibox.",
+	"name": "Quick Links - BETA",
+	"description": "Save and search your links instantly using the omnibox. - THIS EXTENSION IS FOR BETA TESTING",
 	"version": "1.5",
 	"manifest_version": 3,
 	"icons": {
