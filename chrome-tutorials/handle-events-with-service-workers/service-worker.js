@@ -7,9 +7,9 @@ import {
 } from './service-worker.util.js';
 
 const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
-const SUGGESTIONS_PROMPT_EXISTS = 'Select a go-to link or enter a new URL to create one.';
+const SUGGESTIONS_PROMPT_EXISTS = 'Select a quick link or enter a new URL to create one.';
 const SUGGESTIONS_PROMPT_NONE =
-	'No go-to links yet. Enter a URL to create a new one or non-URL to simply search Google.';
+	'No quick links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
 async function updateHistory(input) {
 	const suggestion = await chrome.storage.sync.get(input);

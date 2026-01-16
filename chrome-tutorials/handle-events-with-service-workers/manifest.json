@@ -1,11 +1,14 @@
 {
-	"name": "Go-To",
-	"description": "Uses the omnibox to quickly search your saved links",
-	"version": "1.2",
+	"name": "Quick Links",
+	"description": "Save and search your links instantly using the omnibox.",
+	"version": "1.5",
 	"manifest_version": 3,
 	"icons": {
-		"16": "images/icon-16.png",
-		"128": "images/icon-128.png"
+		"16": "images/logo-16.png",
+		"32": "images/logo-32.png",
+		"34": "images/logo-34.png",
+		"48": "images/logo-48.png",
+		"128": "images/logo-128.png"
 	},
 	"background": {
 		"service_worker": "service-worker.js",
@@ -15,19 +18,19 @@
 	"host_permissions": ["<all_urls>"],
 	"action": {
 		"default_popup": "popup.html",
-		"default_title": "View your go-to's"
+		"default_title": "View your quick links"
 	},
 	"minimum_chrome_version": "102",
 	"commands": {
 		"add-suggestion": {
 			"suggested_key": {
-				"default": "Ctrl+G",
-				"mac": "Alt+G"
+				"default": "Ctrl+L",
+				"mac": "Alt+L"
 			},
-			"description": "Add current page as go-to link"
+			"description": "Add current page as quick link"
 		}
 	},
 	"omnibox": {
-		"keyword": "gt"
+		"keyword": "ql"
 	}
 }

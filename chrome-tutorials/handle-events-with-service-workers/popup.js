@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     formView.classList.add('hidden');
     listView.classList.add('hidden');
 
-    suggestionPrompt.textContent = `You've visited this page frequently. Create a go-to link for quick access?`;
+    suggestionPrompt.textContent = `You've visited this page frequently. Create a quick link for easy access?`;
     previewKeyword.textContent = data.keyword;
     previewDescription.textContent = data.description;
     previewUrl.textContent = data.url;
