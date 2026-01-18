@@ -7,7 +7,7 @@ import {
 } from './service-worker.util.js';
 
 const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
-const SUGGESTIONS_PROMPT_EXISTS = 'Select a quick link or enter a new URL to create one.';
+const SUGGESTIONS_PROMPT_EXISTS = 'Type to select a quick link or enter a new URL to create one.';
 const SUGGESTIONS_PROMPT_NONE =
 	'No quick links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
@@ -30,30 +30,42 @@ chrome.omnibox.onInputStarted.addListener(async () => {
 
 // Display the suggestions after user starts typing, following the keyword "gt"
 chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
+	// Remove any stored top suggestion from session
+	await chrome.storage.session.remove('topSuggestion');
+
+	const trimmedInput = input.trim();
+	if (trimmedInput === '') {
+		// Show prompt when no input
+		await chrome.omnibox.setDefaultSuggestion({
+			description: SUGGESTIONS_PROMPT_EXISTS,
+		});
+		suggest([]);
+		return;
+	}
+
 	// Get all suggestions from storage
 	const allItems = await chrome.storage.sync.get(null);
 	const suggestionKeys = Object.keys(allItems);
-
-	// Remove any stored top suggestion from session
-	await chrome.storage.session.remove('topSuggestion');
 
 	const formatSuggestions = (items) => {
 		return items.map((item) => ({
 			content: item.content,
 			description: item.description,
 		}));
-	}
+	};
 
 	const suggestions = suggestionKeys.map((keyword) => {
 		const item = allItems[keyword];
 		const description = item?.description || '';
-		const url = item?.url ? `<dim> • <url>${item.url}</url></dim>` : '';
-		
+		// Escape XML special characters in URL for omnibox
+		const escapedUrl = item?.url ? item.url.replace(/&/g, '&amp;') : '';
+		const url = escapedUrl ? `<dim> • <url>${escapedUrl}</url></dim>` : '';
+
 		// Calculate match score for ranking
 		const keywordLower = keyword.toLowerCase();
-		const inputLower = input.toLowerCase();
+		const inputLower = trimmedInput.toLowerCase();
 		let matchScore = 0;
-		
+
 		if (keywordLower.startsWith(inputLower)) {
 			matchScore = 100; // Prefix match gets highest score
 		} else if (keywordLower.includes(inputLower)) {
@@ -64,7 +76,7 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 
 		// Highlight matched parts of keyword and description
 		const highlightMatches = (text) => {
-			const regex = new RegExp(`(${input})`, 'gi');
+			const regex = new RegExp(`(${trimmedInput})`, 'gi');
 			return text.replace(regex, '<match>$1</match>');
 		};
 
@@ -82,10 +94,10 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 
 	const filteredSuggestions = suggestions.filter(
 		(suggestion) =>
-			suggestion.content.toLowerCase().includes(input.toLowerCase()) ||
-			suggestion.description.toLowerCase().includes(input.toLowerCase())
+			suggestion.content.toLowerCase().includes(trimmedInput.toLowerCase()) ||
+			suggestion.description.toLowerCase().includes(trimmedInput.toLowerCase()),
 	);
-	
+
 	// Sort by match score (highest first), then by usage frequency
 	filteredSuggestions.sort((a, b) => {
 		if (b.matchScore !== a.matchScore) {
@@ -100,7 +112,9 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 	});
 
 	// Check if there's an exact match (Chrome omnibox removes exact matches from suggestions)
-	const exactMatch = filteredSuggestions.find((suggestion) => suggestion.content.toLowerCase() === input.toLowerCase());
+	const exactMatch = filteredSuggestions.find(
+		(suggestion) => suggestion.content.toLowerCase() === trimmedInput.toLowerCase(),
+	);
 
 	if (exactMatch) {
 		// Set exact match as default suggestion
@@ -109,7 +123,7 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 		});
 		// Remove exact match from suggestions list to avoid duplication
 		const otherSuggestions = filteredSuggestions.filter(
-			(suggestion) => suggestion.content.toLowerCase() !== input.toLowerCase()
+			(suggestion) => suggestion.content.toLowerCase() !== trimmedInput.toLowerCase(),
 		);
 		suggest(formatSuggestions(otherSuggestions));
 	} else if (filteredSuggestions.length === 0) {
@@ -138,11 +152,16 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 
 // Called after user accepts an option - Open the page of the chosen resource
 chrome.omnibox.onInputEntered.addListener(async (input) => {
+	const trimmedInput = input.trim();
+	if (trimmedInput === '') {
+		return;
+	}
 	// Check if input matches the top suggestion
 	const sessionData = await chrome.storage.session.get('topSuggestion');
 	const topSuggestion = sessionData.topSuggestion;
-	
+
 	if (topSuggestion) {
+		await chrome.storage.session.remove('topSuggestion');
 		// Navigate to top suggestion
 		updateHistory(topSuggestion.content);
 		chrome.tabs.create({ url: topSuggestion.url });
@@ -150,17 +169,17 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 	}
 
 	// Get custom suggestion
-	const result = await chrome.storage.sync.get(input);
+	const result = await chrome.storage.sync.get(trimmedInput);
 
 	let url;
 
 	// Check if input matches an existing suggestion
-	if (result[input]) {
-		url = result[input].url;
-		updateHistory(input);
-	} else if (isURL(input)) {
+	if (result[trimmedInput]) {
+		url = result[trimmedInput].url;
+		updateHistory(trimmedInput);
+	} else if (isURL(trimmedInput)) {
 		// Input is a URL - open it and show popup for creating suggestion
-		url = normalizeURL(input);
+		url = normalizeURL(trimmedInput);
 		chrome.tabs.create({ url });
 
 		// Store URL temporarily and open popup
@@ -169,7 +188,7 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 		return;
 	} else {
 		// Treat as Google search
-		url = `${URL_GOOGLE_SEARCH}${input}`;
+		url = `${URL_GOOGLE_SEARCH}${trimmedInput}`;
 	}
 
 	chrome.tabs.create({ url });
