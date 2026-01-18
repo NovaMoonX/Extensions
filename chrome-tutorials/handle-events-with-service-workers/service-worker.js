@@ -34,10 +34,33 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 	const allItems = await chrome.storage.sync.get(null);
 	const suggestionKeys = Object.keys(allItems);
 
+	// Remove any stored top suggestion from session
+	await chrome.storage.session.remove('topSuggestion');
+
+	const formatSuggestions = (items) => {
+		return items.map((item) => ({
+			content: item.content,
+			description: item.description,
+		}));
+	}
+
 	const suggestions = suggestionKeys.map((keyword) => {
 		const item = allItems[keyword];
 		const description = item?.description || '';
 		const url = item?.url ? `<dim> • <url>${item.url}</url></dim>` : '';
+		
+		// Calculate match score for ranking
+		const keywordLower = keyword.toLowerCase();
+		const inputLower = input.toLowerCase();
+		let matchScore = 0;
+		
+		if (keywordLower.startsWith(inputLower)) {
+			matchScore = 100; // Prefix match gets highest score
+		} else if (keywordLower.includes(inputLower)) {
+			matchScore = 50; // Contains match
+		} else if (description.toLowerCase().includes(inputLower)) {
+			matchScore = 25; // Description match
+		}
 
 		// Highlight matched parts of keyword and description
 		const highlightMatches = (text) => {
@@ -51,6 +74,9 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 		return {
 			content: keyword,
 			description: `${highlightedKeyword} - ${highlightedDescription}${url}`,
+			matchScore,
+			rawKeyword: keyword,
+			rawDescription: description,
 		};
 	});
 
@@ -59,6 +85,19 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 			suggestion.content.toLowerCase().includes(input.toLowerCase()) ||
 			suggestion.description.toLowerCase().includes(input.toLowerCase())
 	);
+	
+	// Sort by match score (highest first), then by usage frequency
+	filteredSuggestions.sort((a, b) => {
+		if (b.matchScore !== a.matchScore) {
+			return b.matchScore - a.matchScore;
+		}
+		// If same match score, prefer more recently or frequently used
+		const aItem = allItems[a.content];
+		const bItem = allItems[b.content];
+		const aScore = (aItem?.timesUsed || 0) + (aItem?.lastUsed || 0) / 1000000000;
+		const bScore = (bItem?.timesUsed || 0) + (bItem?.lastUsed || 0) / 1000000000;
+		return bScore - aScore;
+	});
 
 	// Check if there's an exact match (Chrome omnibox removes exact matches from suggestions)
 	const exactMatch = filteredSuggestions.find((suggestion) => suggestion.content.toLowerCase() === input.toLowerCase());
@@ -72,22 +111,44 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 		const otherSuggestions = filteredSuggestions.filter(
 			(suggestion) => suggestion.content.toLowerCase() !== input.toLowerCase()
 		);
-		suggest(otherSuggestions);
+		suggest(formatSuggestions(otherSuggestions));
 	} else if (filteredSuggestions.length === 0) {
 		await chrome.omnibox.setDefaultSuggestion({
 			description: SUGGESTIONS_PROMPT_NONE,
 		});
 		suggest([]);
 	} else {
+		// Show top match as default suggestion - Enter navigates to it
+		const topMatch = filteredSuggestions[0];
 		await chrome.omnibox.setDefaultSuggestion({
-			description: SUGGESTIONS_PROMPT_EXISTS,
+			description: topMatch.description,
 		});
-		suggest(filteredSuggestions);
+		// Store top suggestion in session for Enter key handler
+		await chrome.storage.session.set({
+			topSuggestion: {
+				content: topMatch.content,
+				url: allItems[topMatch.content]?.url,
+			},
+		});
+		// Remove top match from suggestions to avoid duplication
+		const otherSuggestions = filteredSuggestions.slice(1);
+		suggest(formatSuggestions(otherSuggestions));
 	}
 });
 
 // Called after user accepts an option - Open the page of the chosen resource
 chrome.omnibox.onInputEntered.addListener(async (input) => {
+	// Check if input matches the top suggestion
+	const sessionData = await chrome.storage.session.get('topSuggestion');
+	const topSuggestion = sessionData.topSuggestion;
+	
+	if (topSuggestion) {
+		// Navigate to top suggestion
+		updateHistory(topSuggestion.content);
+		chrome.tabs.create({ url: topSuggestion.url });
+		return;
+	}
+
 	// Get custom suggestion
 	const result = await chrome.storage.sync.get(input);
 
