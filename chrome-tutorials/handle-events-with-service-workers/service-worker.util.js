@@ -101,7 +101,10 @@ export function extractSuggestionFields(urlString) {
 		
 		const description = `Open ${capitalizedName}`;
 
-		return { url: urlString, keyword, description };
+		// Strip query parameters by default
+		const urlWithoutParams = stripQueryParams(urlString);
+
+		return { url: urlWithoutParams, keyword, description, originalUrl: urlString };
 	} catch (error) {
 		console.error('Error parsing URL:', error);
 		return { url: urlString, keyword: '', description: '' };

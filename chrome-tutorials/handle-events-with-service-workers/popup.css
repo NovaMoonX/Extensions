@@ -36,6 +36,36 @@ input:focus {
   box-shadow: 0 0 4px rgba(139, 92, 246, 0.3);
 }
 
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 0;
+}
+
+.toggle-group input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.toggle-group label {
+  margin-bottom: 0;
+  font-weight: 400;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  flex: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .toggle-group label {
+    color: #999;
+  }
+}
+
 .button-group {
   display: flex;
   gap: 8px;

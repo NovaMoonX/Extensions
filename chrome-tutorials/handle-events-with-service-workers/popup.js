@@ -1,7 +1,9 @@
 import { extractSuggestionFields } from './service-worker.util.js';
+import { stripQueryParams } from './service-worker.util.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const urlInput = document.getElementById('url');
+  const stripQueryParamsToggle = document.getElementById('stripQueryParamsToggle');
   const keywordInput = document.getElementById('keyword');
   const descriptionInput = document.getElementById('description');
   const form = document.getElementById('suggestionForm');
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let editingKeyword = null;
   let allSuggestions = { keys: [], map: {} };
   let suggestedData = null;
+  let originalUrlWithParams = null;
 
   // Function to check if keyword exists
   async function checkKeywordExists(keyword) {
@@ -48,7 +51,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateKeywordWarning(keyword);
   });
 
-  // Update warning display for a given keyword
+  // Handle query parameter stripping toggle
+  stripQueryParamsToggle.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      // Exclude params - strip the current URL
+      urlInput.value = stripQueryParams(urlInput.value);
+    } else {
+      // Include params - restore the original URL with params
+      if (originalUrlWithParams) {
+        urlInput.value = originalUrlWithParams;
+      }
+    }
+  });
+
   async function updateKeywordWarning(keyword) {
     const trimmedKeyword = keyword.trim().toLowerCase();
     
@@ -76,10 +91,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Show form view with pending URL
     showFormView();
     
-    const { url, keyword, description } = extractSuggestionFields(pendingUrl);
+    const { url, keyword, description, originalUrl } = extractSuggestionFields(pendingUrl);
+    originalUrlWithParams = originalUrl;
     urlInput.value = url;
     keywordInput.value = keyword;
     descriptionInput.value = description;
+    stripQueryParamsToggle.checked = true;
     
     // Check if pre-filled keyword matches existing
     await updateKeywordWarning(keyword);
@@ -234,9 +251,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (suggestion) {
       editingKeyword = keyword;
+      originalUrlWithParams = null;
       urlInput.value = suggestion.url;
       keywordInput.value = keyword;
       descriptionInput.value = suggestion.description || '';
+      stripQueryParamsToggle.checked = true;
       
       showFormView(true);
       descriptionInput.focus();
@@ -268,13 +287,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   addNewBtn.addEventListener('click', async () => {
     editingKeyword = null;
+    originalUrlWithParams = null;
     form.reset();
+    stripQueryParamsToggle.checked = true;
     
     // Get the current active tab's URL
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0]?.url) {
-        const { url, keyword, description } = extractSuggestionFields(tabs[0].url);
+        const { url, keyword, description, originalUrl } = extractSuggestionFields(tabs[0].url);
+        originalUrlWithParams = originalUrl;
         urlInput.value = url;
         keywordInput.value = keyword;
         descriptionInput.value = description;
