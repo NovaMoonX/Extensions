@@ -22,6 +22,15 @@ async function updateHistory(input) {
 	}
 }
 
+async function openLink(url) {
+	const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+	if (tabs[0]) {
+		chrome.tabs.update(tabs[0].id, { url });
+	} else {
+		chrome.tabs.create({ url });
+	}
+}
+
 chrome.omnibox.onInputStarted.addListener(async () => {
 	await chrome.omnibox.setDefaultSuggestion({
 		description: SUGGESTIONS_PROMPT_EXISTS,
@@ -164,7 +173,7 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 		await chrome.storage.session.remove('topSuggestion');
 		// Navigate to top suggestion
 		updateHistory(topSuggestion.content);
-		chrome.tabs.create({ url: topSuggestion.url });
+		await openLink(topSuggestion.url);
 		return;
 	}
 
@@ -180,7 +189,7 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 	} else if (isURL(trimmedInput)) {
 		// Input is a URL - open it and show popup for creating suggestion
 		url = normalizeURL(trimmedInput);
-		chrome.tabs.create({ url });
+		await openLink(url);
 
 		// Store URL temporarily and open popup
 		await chrome.storage.session.set({ pendingUrl: url });
@@ -191,7 +200,7 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 		url = `${URL_GOOGLE_SEARCH}${trimmedInput}`;
 	}
 
-	chrome.tabs.create({ url });
+	await openLink(url);
 });
 
 // Handle keyboard shortcut command
