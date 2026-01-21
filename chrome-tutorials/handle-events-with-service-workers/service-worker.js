@@ -243,6 +243,18 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 		return;
 	}
 
+	// Skip Google search results pages
+	try {
+		const urlObj = new URL(url);
+		if (urlObj.hostname.includes('google.com') && 
+		    (urlObj.pathname.includes('/search') || urlObj.searchParams.has('q'))) {
+			return;
+		}
+	} catch {
+		// Invalid URL, skip
+		return;
+	}
+
 	// Get existing visit history for this URL
 	const historyKey = `visit_history_${urlWithoutParams}`;
 	const result = await chrome.storage.local.get(historyKey);
