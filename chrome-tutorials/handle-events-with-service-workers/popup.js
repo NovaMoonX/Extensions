@@ -123,10 +123,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     listView.classList.add('hidden');
     
     if (isEdit) {
-      formTitle.textContent = 'Edit Suggestion';
+      formTitle.textContent = 'Edit Quick Link';
       saveBtn.textContent = 'Update';
     } else {
-      formTitle.textContent = 'Add New Suggestion';
+      formTitle.textContent = 'Add New Quick Link';
       saveBtn.textContent = 'Save';
     }
   }
