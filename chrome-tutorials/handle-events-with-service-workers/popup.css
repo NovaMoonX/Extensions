@@ -217,25 +217,151 @@ button.edit:hover {
   border-color: #ccc;
 }
 
-.blocked-section {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.blocked-section h3 {
-  font-size: 13px;
-  color: #666;
-  margin: 0 0 8px 0;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.blocked-list {
+/* === Blocked Suggestions View === */
+.blocked-list-full {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+/* === Settings View === */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px;
+  background-color: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  gap: 12px;
+}
+
+.setting-info {
+  flex: 1;
+}
+
+.setting-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.setting-description {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 22px;
+  transition: background-color 0.2s;
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #8b5cf6;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
+/* === Shared view header (Blocked / Settings) === */
+.view-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.view-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #8b5cf6;
+  font-weight: 600;
+  flex-grow: 0;
+  width: auto;
+}
+
+.back-btn:hover {
+  color: #7c3aed;
+  background: none;
+}
+
+/* === List footer (View Blocked + Settings buttons) === */
+.list-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.footer-btn {
+  flex: 1;
+  padding: 7px 10px;
+  background-color: #f0f0f0;
+  color: #555;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.footer-btn:hover {
+  background-color: #e8e8e8;
+  color: #333;
 }
 
 .blocked-item {
@@ -541,14 +667,6 @@ kbd {
     border-color: #555;
   }
 
-  .blocked-section {
-    border-top-color: #444;
-  }
-
-  .blocked-section h3 {
-    color: #aaa;
-  }
-
   .blocked-item {
     background-color: #2d2d2d;
     border-color: #444;
@@ -619,5 +737,45 @@ kbd {
 
   .empty-state {
     color: #888;
+  }
+
+  /* New views dark mode */
+  .setting-item {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+
+  .setting-label {
+    color: #e0e0e0;
+  }
+
+  .setting-description {
+    color: #aaa;
+  }
+
+  .footer-btn {
+    background-color: #2d2d2d;
+    color: #aaa;
+    border-color: #444;
+  }
+
+  .footer-btn:hover {
+    background-color: #3d3d3d;
+    color: #e0e0e0;
+  }
+
+  .back-btn {
+    color: #a78bfa;
+  }
+
+  #blockedSearchInput {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  #blockedSearchInput:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 4px rgba(167, 139, 250, 0.5);
   }
 }

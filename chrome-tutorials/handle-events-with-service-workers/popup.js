@@ -30,9 +30,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cancelSuggestionBtn = document.getElementById('cancelSuggestionBtn');
   const blockSuggestionBtn = document.getElementById('blockSuggestionBtn');
 
-  // Blocked URLs elements
-  const blockedSection = document.getElementById('blockedSection');
+  // List footer buttons
+  const viewBlockedBtn = document.getElementById('viewBlockedBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+
+  // Blocked view elements
+  const blockedView = document.getElementById('blockedView');
   const blockedList = document.getElementById('blockedList');
+  const blockedSearchInput = document.getElementById('blockedSearchInput');
+  const backFromBlockedBtn = document.getElementById('backFromBlockedBtn');
+
+  // Settings view elements
+  const settingsView = document.getElementById('settingsView');
+  const autoSuggestionsToggle = document.getElementById('autoSuggestionsToggle');
+  const backFromSettingsBtn = document.getElementById('backFromSettingsBtn');
 
   let editingKeyword = null;
   let allSuggestions = { keys: [], map: {} };
@@ -135,22 +146,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     formView.classList.add('hidden');
     listView.classList.remove('hidden');
     suggestionView.classList.add('hidden');
+    blockedView.classList.add('hidden');
+    settingsView.classList.add('hidden');
     searchInput.value = '';
     loadSuggestions();
-    loadBlockedUrls();
+    updateBlockedCount();
     searchInput.focus();
   }
 
-  async function loadBlockedUrls() {
+  function showBlockedView() {
+    listView.classList.add('hidden');
+    blockedView.classList.remove('hidden');
+    blockedSearchInput.value = '';
+    loadBlockedUrls();
+    blockedSearchInput.focus();
+  }
+
+  function showSettingsView() {
+    listView.classList.add('hidden');
+    settingsView.classList.remove('hidden');
+    loadSettings();
+  }
+
+  async function updateBlockedCount() {
+    const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+    const count = blockedSuggestions.length;
+    if (count > 0) {
+      viewBlockedBtn.textContent = `Blocked (${count})`;
+      viewBlockedBtn.classList.remove('hidden');
+    } else {
+      viewBlockedBtn.classList.add('hidden');
+    }
+  }
+
+  async function loadBlockedUrls(searchTerm = '') {
     const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
 
-    if (blockedSuggestions.length === 0) {
-      blockedSection.classList.add('hidden');
+    const filtered = searchTerm
+      ? blockedSuggestions.filter(url => url.toLowerCase().includes(searchTerm.toLowerCase()))
+      : blockedSuggestions;
+
+    if (filtered.length === 0) {
+      blockedList.innerHTML = blockedSuggestions.length === 0
+        ? '<div class="empty-state">No blocked suggestions.</div>'
+        : '<div class="empty-state">No results match your search.</div>';
       return;
     }
 
-    blockedSection.classList.remove('hidden');
-    blockedList.innerHTML = blockedSuggestions
+    blockedList.innerHTML = filtered
       .map(url => `
         <div class="blocked-item">
           <div class="blocked-url" title="${url}">${url}</div>
@@ -172,8 +215,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const updatedBlocked = blockedSuggestions.filter(blockedUrl => blockedUrl !== url);
     await chrome.storage.sync.set({ blockedSuggestions: updatedBlocked });
 
-    // Reload the blocked URLs list
-    loadBlockedUrls();
+    // Reload the blocked URLs list with current search term
+    loadBlockedUrls(blockedSearchInput.value);
+  }
+
+  async function loadSettings() {
+    const { settings = {} } = await chrome.storage.sync.get('settings');
+    autoSuggestionsToggle.checked = settings.autoSuggestionsEnabled !== false;
+  }
+
+  async function saveSettings() {
+    const { settings = {} } = await chrome.storage.sync.get('settings');
+    settings.autoSuggestionsEnabled = autoSuggestionsToggle.checked;
+    await chrome.storage.sync.set({ settings });
   }
 
   async function loadSuggestions(searchTerm = '') {
@@ -181,9 +235,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const suggestionsMap = await chrome.storage.sync.get(null);
     let suggestionKeys = Object.keys(suggestionsMap);
 
-    // Filter out non-suggestion keys like 'blockedSuggestions'
+    // Filter out non-suggestion keys like 'blockedSuggestions' and 'settings'
     suggestionKeys = suggestionKeys.filter(key => 
       key !== 'blockedSuggestions' && 
+      key !== 'settings' &&
       suggestionsMap[key] && 
       typeof suggestionsMap[key] === 'object' && 
       !Array.isArray(suggestionsMap[key])
@@ -284,6 +339,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   searchInput.addEventListener('input', (e) => {
     loadSuggestions(e.target.value);
   });
+
+  viewBlockedBtn.addEventListener('click', showBlockedView);
+  backFromBlockedBtn.addEventListener('click', showListView);
+
+  blockedSearchInput.addEventListener('input', (e) => {
+    loadBlockedUrls(e.target.value);
+  });
+
+  settingsBtn.addEventListener('click', showSettingsView);
+  backFromSettingsBtn.addEventListener('click', showListView);
+
+  autoSuggestionsToggle.addEventListener('change', saveSettings);
 
   addNewBtn.addEventListener('click', async () => {
     editingKeyword = null;
@@ -470,3 +537,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
