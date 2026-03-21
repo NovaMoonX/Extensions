@@ -190,7 +190,11 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 
 	let url;
 
-	if (isURL(trimmedInput)) {
+	// Check if input matches an existing suggestion
+	if (result[trimmedInput]) {
+		url = result[trimmedInput].url;
+		updateHistory(trimmedInput);
+	} else if (isURL(trimmedInput)) {
 		// Input is a URL - open it and show popup for creating suggestion
 		url = normalizeURL(trimmedInput);
 		await openLink(url);
@@ -255,12 +259,13 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 		    (urlObj.pathname.includes('/search') || urlObj.searchParams.has('q'))) {
 			return;
 		}
-		// Skip localhost and loopback addresses — never suggest quick links for local dev servers
+		// Skip localhost, loopback addresses, and internal quick-link hostnames — never suggest quick links for local dev servers
 		if (
 			hostname === 'localhost' ||
 			hostname === '127.0.0.1' ||
 			hostname === '::1' ||
-			hostname === '0.0.0.0'
+			hostname === '0.0.0.0' ||
+			hostname === 'ql'
 		) {
 			return;
 		}
@@ -343,7 +348,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 // Covers two cases:
 //   1. Chrome navigates to http://ql/<keyword> (local-hostname interpretation)
 //   2. Chrome searches Google for "ql/<keyword>" (most common: no TLD → search)
-chrome.webNavigation.onCommitted.addListener(async (details) => {
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 	// Only handle main frame navigations
 	if (details.frameId !== 0) return;
 
