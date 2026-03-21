@@ -165,20 +165,28 @@ chrome.omnibox.onInputEntered.addListener(async (input) => {
 	if (trimmedInput === '') {
 		return;
 	}
-	// Check if input matches the top suggestion
+
+	// First: check if input directly matches a saved quick link
+	// (handles the case where the user clicks a non-top suggestion from the dropdown)
+	const result = await chrome.storage.sync.get(trimmedInput);
+	if (result[trimmedInput]) {
+		await chrome.storage.session.remove('topSuggestion');
+		updateHistory(trimmedInput);
+		await openLink(result[trimmedInput].url);
+		return;
+	}
+
+	// Second: check if there is a stored top suggestion
+	// (handles the case where the user presses Enter after typing a partial keyword)
 	const sessionData = await chrome.storage.session.get('topSuggestion');
 	const topSuggestion = sessionData.topSuggestion;
 
 	if (topSuggestion) {
 		await chrome.storage.session.remove('topSuggestion');
-		// Navigate to top suggestion
 		updateHistory(topSuggestion.content);
 		await openLink(topSuggestion.url);
 		return;
 	}
-
-	// Get custom suggestion
-	const result = await chrome.storage.sync.get(trimmedInput);
 
 	let url;
 
@@ -243,11 +251,22 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 		return;
 	}
 
-	// Skip Google search results pages
+	// Skip Google search results pages and localhost/loopback addresses
 	try {
 		const urlObj = new URL(url);
-		if (urlObj.hostname.includes('google.com') && 
+		const hostname = urlObj.hostname;
+		if ((hostname === 'google.com' || hostname.endsWith('.google.com')) && 
 		    (urlObj.pathname.includes('/search') || urlObj.searchParams.has('q'))) {
+			return;
+		}
+		// Skip localhost, loopback addresses, and internal quick-link hostnames — never suggest quick links for local dev servers
+		if (
+			hostname === 'localhost' ||
+			hostname === '127.0.0.1' ||
+			hostname === '::1' ||
+			hostname === '0.0.0.0' ||
+			hostname === 'ql'
+		) {
 			return;
 		}
 	} catch {
@@ -274,6 +293,12 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 	// Check if URL has been visited frequently
 	if (hasFrequentVisits(recentVisits)) {
 		console.log(`Frequent visits detected for: ${urlWithoutParams}`);
+
+		// Check if auto-suggestions are enabled in user settings (default: enabled)
+		const { settings = {} } = await chrome.storage.sync.get('settings');
+		if (settings.autoSuggestionsEnabled === false) {
+			return;
+		}
 
 		// Check if URL is blocked from suggestions
 		const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
@@ -315,5 +340,59 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 
 		// Open popup to show suggestion
 		chrome.action.openPopup();
+	}
+});
+
+// Handle ql/<keyword> navigation pattern so users can type "ql/keyword" in the address bar
+// to jump directly to a saved quick link without the omnibox Tab trigger.
+// Covers two cases:
+//   1. Chrome navigates to http://ql/<keyword> (local-hostname interpretation)
+//   2. Chrome searches Google for "ql/<keyword>" (most common: no TLD → search)
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+	// Only handle main frame navigations
+	if (details.frameId !== 0) return;
+
+	let keyword = null;
+
+	try {
+		const navUrl = new URL(details.url);
+
+		// Case 1: Direct navigation to http://ql/<keyword>
+		if (navUrl.hostname === 'ql') {
+			const path = navUrl.pathname.replace(/^\/+/, '').trim();
+			if (path) keyword = path;
+		}
+		// Case 2: Google search whose query is exactly "ql/<keyword>"
+		else if (
+			(navUrl.hostname === 'www.google.com' || navUrl.hostname === 'google.com') &&
+			navUrl.pathname === '/search'
+		) {
+			const query = navUrl.searchParams.get('q') || '';
+			const match = query.match(/^ql\/(\S+)$/);
+			if (match) keyword = match[1];
+		}
+	} catch {
+		return;
+	}
+
+	if (!keyword) return;
+
+	// Look up the keyword in storage and redirect if found
+	const result = await chrome.storage.sync.get(keyword);
+	if (result[keyword]) {
+		updateHistory(keyword);
+		if (typeof details.tabId === 'number' && details.tabId >= 0) {
+			chrome.tabs.update(details.tabId, { url: result[keyword].url });
+		}
+	}
+});
+
+// Detect when popup closes and clean up session storage
+chrome.runtime.onConnect.addListener((port) => {
+	if (port.name === 'popup') {
+		port.onDisconnect.addListener(async () => {
+			// Clear any pending session data when popup closes
+			await chrome.storage.session.remove(['pendingUrl', 'suggestedGoLink']);
+		});
 	}
 });

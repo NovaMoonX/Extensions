@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<link rel="stylesheet" href="popup.css" />
+		<meta charset="UTF-8">
 	</head>
 	<body>
 		<div id="suggestionView" class="hidden">
@@ -78,13 +79,46 @@
 			</div>
 
 			<div id="suggestionsList" class="suggestions-list"></div>
-			
-			<div id="blockedSection" class="blocked-section hidden">
-				<h3>Blocked Suggestions</h3>
-				<div id="blockedList" class="blocked-list"></div>
+
+			<div class="list-footer">
+				<button id="viewBlockedBtn" class="footer-btn hidden">Blocked (0)</button>
+				<button id="settingsBtn" class="footer-btn">⚙ Settings</button>
 			</div>
 
 			<div class="shortcut-hint">Tip: Press <kbd>Option+L</kbd> to quickly add current page</div>
+		</div>
+
+		<div id="blockedView" class="hidden">
+			<div class="view-header">
+				<button id="backFromBlockedBtn" class="back-btn">← Back</button>
+				<h2>Blocked Suggestions</h2>
+			</div>
+
+			<div class="search-container">
+				<input type="text" id="blockedSearchInput" placeholder="Search blocked..." />
+			</div>
+
+			<div id="blockedList" class="blocked-list-full"></div>
+		</div>
+
+		<div id="settingsView" class="hidden">
+			<div class="view-header">
+				<button id="backFromSettingsBtn" class="back-btn">← Back</button>
+				<h2>Settings</h2>
+			</div>
+
+			<div class="settings-list">
+				<div class="setting-item">
+					<div class="setting-info">
+						<div class="setting-label">Auto Suggestions</div>
+						<div class="setting-description">Automatically suggest creating a quick link when you visit a page frequently</div>
+					</div>
+					<label class="toggle-switch">
+						<input type="checkbox" id="autoSuggestionsToggle" checked />
+						<span class="toggle-slider"></span>
+					</label>
+				</div>
+			</div>
 		</div>
 
 		<script type="module" src="popup.js"></script>
