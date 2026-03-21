@@ -20,7 +20,7 @@ A Chrome Web Store listing description is maintained at:
 
 | File | Purpose |
 |------|---------|
-| `manifest.json` | Extension metadata, permissions, omnibox keyword |
+| `manifest.json` | Extension metadata, permissions, omnibox keyword. Update version number as needed. |
 | `service-worker.js` | Omnibox logic, visit tracking, `ql/` trigger, settings enforcement |
 | `service-worker.util.js` | Pure utility functions (URL parsing, visit frequency) |
 | `popup.html` | Popup shell — all views declared here |

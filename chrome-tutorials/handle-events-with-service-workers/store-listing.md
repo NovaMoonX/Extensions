@@ -38,7 +38,7 @@ Your quick links automatically sync to your Google account via Chrome Sync. Acce
 
 ## Version History
 
-### 1.5
+### 1.6
 - Added `ql/<keyword>` address-bar trigger — no Tab key required
 - Blocked suggestions moved to a dedicated searchable view
 - New Settings screen with Auto Suggestions toggle
