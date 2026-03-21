@@ -44,3 +44,4 @@ Your quick links automatically sync to your Google account via Chrome Sync. Acce
 - New Settings screen with Auto Suggestions toggle
 - Fixed omnibox dropdown: clicking any suggestion now navigates to the correct link
 - Local dev servers (localhost, 127.0.0.1) are no longer suggested as quick links
+- Fixed popup state: suggestions now reset properly when popup is closed

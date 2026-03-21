@@ -381,9 +381,18 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 	const result = await chrome.storage.sync.get(keyword);
 	if (result[keyword]) {
 		updateHistory(keyword);
-		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-		if (tabs[0]) {
-			chrome.tabs.update(tabs[0].id, { url: result[keyword].url });
+		if (typeof details.tabId === 'number' && details.tabId >= 0) {
+			chrome.tabs.update(details.tabId, { url: result[keyword].url });
 		}
+	}
+});
+
+// Detect when popup closes and clean up session storage
+chrome.runtime.onConnect.addListener((port) => {
+	if (port.name === 'popup') {
+		port.onDisconnect.addListener(async () => {
+			// Clear any pending session data when popup closes
+			await chrome.storage.session.remove(['pendingUrl', 'suggestedGoLink']);
+		});
 	}
 });

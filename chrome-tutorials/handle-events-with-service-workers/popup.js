@@ -536,5 +536,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Error blocking suggestion:', error);
     }
   });
+
+  // Connect to service worker so it can detect when popup closes
+  const port = chrome.runtime.connect({ name: 'popup' });
 });
 
