@@ -1,4 +1,4 @@
-import { extractSuggestionFields } from './service-worker.util.js';
+import { extractSuggestionFields, extractSuggestionFieldsFromTitle } from './service-worker.util.js';
 import { stripQueryParams } from './service-worker.util.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Check if there's a pending URL from omnibox or a suggestion from frequent visits
-  const sessionData = await chrome.storage.session.get(['pendingUrl', 'suggestedGoLink']);
-  const { pendingUrl, suggestedGoLink } = sessionData;
+  const sessionData = await chrome.storage.session.get(['pendingUrl', 'pendingTitle', 'suggestedGoLink']);
+  const { pendingUrl, pendingTitle, suggestedGoLink } = sessionData;
   
   if (suggestedGoLink) {
     // Show suggestion view for frequent visits
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Show form view with pending URL
     showFormView();
     
-    const { url, keyword, description, originalUrl } = extractSuggestionFields(pendingUrl);
+    const { url, keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(pendingTitle, pendingUrl);
     originalUrlWithParams = originalUrl;
     urlInput.value = url;
     keywordInput.value = keyword;
@@ -358,11 +358,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.reset();
     stripQueryParamsToggle.checked = true;
     
-    // Get the current active tab's URL
+    // Get the current active tab's URL and title
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0]?.url) {
-        const { url, keyword, description, originalUrl } = extractSuggestionFields(tabs[0].url);
+        const { url, keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title, tabs[0].url);
         originalUrlWithParams = originalUrl;
         urlInput.value = url;
         keywordInput.value = keyword;

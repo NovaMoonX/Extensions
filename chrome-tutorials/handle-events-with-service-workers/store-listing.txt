@@ -10,7 +10,7 @@ What You Get:
 Type "ql" in your address bar, add a keyword, and press Enter. That's it. Your most-used sites are now one keystroke away. You can also type ql/<keyword> directly in the address bar — no activation step required.
 
 🎯 Smart Suggestions
-Visit a site frequently? We'll suggest creating a quick link automatically. Accept, edit, or block — you're in control. Toggle auto-suggestions on or off in Settings at any time.
+Visit a site frequently? We'll suggest creating a quick link automatically, with a keyword and description drawn from the page's tab name — not just the URL. Accept, edit, or block — you're in control. Toggle auto-suggestions on or off in Settings at any time.
 
 ⌨️ Keyboard Shortcuts
 Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Never touch your mouse.

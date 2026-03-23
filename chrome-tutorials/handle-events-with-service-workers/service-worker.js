@@ -4,6 +4,7 @@ import {
 	stripQueryParams,
 	hasFrequentVisits,
 	extractSuggestionFields,
+	extractSuggestionFieldsFromTitle,
 } from './service-worker.util.js';
 
 const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
@@ -217,8 +218,11 @@ chrome.commands.onCommand.addListener(async (command) => {
 		// Get the current active tab
 		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 		if (tabs[0]?.url) {
-			// Store URL in session and open popup
-			await chrome.storage.session.set({ pendingUrl: tabs[0].url });
+			// Store URL and tab title in session and open popup
+			await chrome.storage.session.set({
+				pendingUrl: tabs[0].url,
+				pendingTitle: tabs[0].title || '',
+			});
 			chrome.action.openPopup();
 		}
 	}
@@ -316,31 +320,79 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 			return;
 		}
 
-		const { keyword, description } = extractSuggestionFields(urlWithoutParams);
-
-		// Check if keyword already exists
-		const existing = await chrome.storage.sync.get(keyword);
-		if (existing[keyword]) {
-			// Already have a go-link for this, mark as suggested
-			await chrome.storage.local.set({ [suggestionKey]: true });
-			return;
-		}
-
-		// Store suggestion in session and open popup
+		// Defer to onCompleted so the tab title is available (it isn't at onCommitted time).
+		// Pass the suggestionKey so onCompleted can mark after the keyword check.
 		await chrome.storage.session.set({
-			suggestedGoLink: {
-				url: urlWithoutParams,
-				keyword,
-				description,
-			},
+			[`pendingAutoSuggestion_${tabId}`]: { url: urlWithoutParams, suggestionKey },
 		});
-
-		// Mark as suggested so we don't suggest again
-		await chrome.storage.local.set({ [suggestionKey]: true });
-
-		// Open popup to show suggestion
-		chrome.action.openPopup();
 	}
+});
+
+// Show the auto-suggestion popup once the page has fully loaded so the tab title is correct.
+chrome.webNavigation.onCompleted.addListener(async (details) => {
+	// Only handle main frame navigations (not iframes)
+	if (details.frameId !== 0) {
+		return;
+	}
+
+	const pendingKey = `pendingAutoSuggestion_${details.tabId}`;
+	const sessionResult = await chrome.storage.session.get(pendingKey);
+	const pending = sessionResult[pendingKey];
+
+	if (!pending) {
+		return;
+	}
+
+	// Always clean up the pending marker
+	await chrome.storage.session.remove(pendingKey);
+
+	// Normalize both URLs the same way before comparing so that differences
+	// in trailing slashes or port defaults don't cause a false mismatch.
+	const normalizeForCompare = (url) => {
+		try {
+			const u = new URL(url);
+			return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+		} catch {
+			return url;
+		}
+	};
+	if (normalizeForCompare(stripQueryParams(details.url)) !== normalizeForCompare(pending.url)) {
+		return;
+	}
+
+	// Get the tab title now that the page has loaded
+	let tab;
+	try {
+		tab = await chrome.tabs.get(details.tabId);
+	} catch {
+		return;
+	}
+
+	const { keyword, description } = extractSuggestionFieldsFromTitle(tab.title, pending.url);
+
+	// Check if keyword already exists — if so, mark as suggested and skip.
+	// (The keyword is now title-based; if it conflicts we don't suggest rather
+	//  than overwriting the user's existing link.)
+	const existing = await chrome.storage.sync.get(keyword);
+	if (existing[keyword]) {
+		await chrome.storage.local.set({ [pending.suggestionKey]: true });
+		return;
+	}
+
+	// Mark as suggested so we don't trigger the popup for this URL again.
+	await chrome.storage.local.set({ [pending.suggestionKey]: true });
+
+	// Store suggestion in session and open popup
+	await chrome.storage.session.set({
+		suggestedGoLink: {
+			url: pending.url,
+			keyword,
+			description,
+		},
+	});
+
+	// Open popup to show suggestion
+	chrome.action.openPopup();
 });
 
 // Handle ql/<keyword> navigation pattern so users can type "ql/keyword" in the address bar
@@ -392,7 +444,7 @@ chrome.runtime.onConnect.addListener((port) => {
 	if (port.name === 'popup') {
 		port.onDisconnect.addListener(async () => {
 			// Clear any pending session data when popup closes
-			await chrome.storage.session.remove(['pendingUrl', 'suggestedGoLink']);
+			await chrome.storage.session.remove(['pendingUrl', 'pendingTitle', 'suggestedGoLink']);
 		});
 	}
 });

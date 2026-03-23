@@ -68,6 +68,35 @@ export function hasFrequentVisits(visitTimestamps) {
 	return false;
 }
 
+// Convert a tab title to suggestion fields (keyword + description).
+// Falls back to extractSuggestionFields() when the title is empty.
+export function extractSuggestionFieldsFromTitle(tabTitle, urlString) {
+	const urlWithoutParams = stripQueryParams(urlString);
+
+	if (!tabTitle || !tabTitle.trim()) {
+		return extractSuggestionFields(urlString);
+	}
+
+	const trimmedTitle = tabTitle.trim();
+
+	// Build kebab-case keyword: lower-case, keep only Unicode letters/numbers and spaces,
+	// then collapse runs of whitespace into single hyphens.
+	const keyword = trimmedTitle
+		.toLowerCase()
+		.replace(/[^\p{L}\p{N}\s]/gu, ' ')
+		.trim()
+		.replace(/\s+/g, '-')
+		.replace(/^-+|-+$/g, '');
+
+	if (!keyword) {
+		return extractSuggestionFields(urlString);
+	}
+
+	const description = `Open ${trimmedTitle}`;
+
+	return { url: urlWithoutParams, keyword, description, originalUrl: urlString };
+}
+
 // Function to extract suggestion fields from a URL
 export function extractSuggestionFields(urlString) {
 	try {
