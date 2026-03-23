@@ -1,5 +1,4 @@
-import { extractSuggestionFields, extractSuggestionFieldsFromTitle } from './service-worker.util.js';
-import { stripQueryParams } from './service-worker.util.js';
+import { extractSuggestionFieldsFromTitle, stripQueryParams } from './service-worker.util.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const urlInput = document.getElementById('url');

@@ -3,7 +3,6 @@ import {
 	normalizeURL,
 	stripQueryParams,
 	hasFrequentVisits,
-	extractSuggestionFields,
 	extractSuggestionFieldsFromTitle,
 } from './service-worker.util.js';
 
@@ -33,11 +32,22 @@ async function openLink(url) {
 }
 
 // Returns true if any saved quick link already points to the given URL.
+// Normalizes both sides (strips query params, collapses trailing slashes) so that
+// links saved with or without query params are still matched correctly.
 async function urlHasExistingLink(url) {
+	const normalizeForComparison = (rawUrl) => {
+		if (!rawUrl || typeof rawUrl !== 'string') return null;
+		return stripQueryParams(rawUrl).replace(/\/+$/, '');
+	};
+
+	const target = normalizeForComparison(url);
+	if (!target) return false;
+
 	const allLinks = await chrome.storage.sync.get(null);
-	return Object.values(allLinks).some(
-		(item) => item && typeof item === 'object' && !Array.isArray(item) && item.url === url,
-	);
+	return Object.values(allLinks).some((item) => {
+		if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+		return normalizeForComparison(item.url) === target;
+	});
 }
 
 chrome.omnibox.onInputStarted.addListener(async () => {
@@ -358,9 +368,6 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 		return;
 	}
 
-	// Always clean up the pending marker
-	await chrome.storage.session.remove(pendingKey);
-
 	// Normalize both URLs the same way before comparing so that differences
 	// in trailing slashes or port defaults don't cause a false mismatch.
 	const normalizeForCompare = (url) => {
@@ -372,8 +379,12 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 		}
 	};
 	if (normalizeForCompare(stripQueryParams(details.url)) !== normalizeForCompare(pending.url)) {
+		// URL doesn't match — leave the pending entry so a later onCompleted can pick it up.
 		return;
 	}
+
+	// URL matched — clean up the pending marker now that we're committed to handling it.
+	await chrome.storage.session.remove(pendingKey);
 
 	// Get the tab title now that the page has loaded
 	let tab;
@@ -415,6 +426,12 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
 	// Open popup to show suggestion
 	chrome.action.openPopup();
+});
+
+// Clean up stale pending auto-suggestion entries when a tab is closed so that session
+// storage doesn't accumulate entries for navigations that never reached onCompleted.
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+	await chrome.storage.session.remove(`pendingAutoSuggestion_${tabId}`);
 });
 
 // Handle ql/<keyword> navigation pattern so users can type "ql/keyword" in the address bar

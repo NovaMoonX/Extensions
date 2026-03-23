@@ -35,6 +35,12 @@ No more bookmark folders. No more typing full URLs. Just instant access to every
 
 Version History
 
+1.7
+- Auto-suggestions now use the page's tab title for the keyword and description — more meaningful and readable shortcuts
+- Duplicate URL suggestions are no longer shown when a quick link already exists for that URL
+- Keywords are now constrained to ASCII characters for reliable ql/<keyword> address-bar navigation
+- Pending auto-suggestion data is cleaned up automatically when a tab is closed
+
 1.6
 - Added ql/<keyword> address-bar trigger — no Tab key required
 - Blocked suggestions moved to a dedicated searchable view

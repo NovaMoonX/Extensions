@@ -79,11 +79,13 @@ export function extractSuggestionFieldsFromTitle(tabTitle, urlString) {
 
 	const trimmedTitle = tabTitle.trim();
 
-	// Build kebab-case keyword: lower-case, keep only Unicode letters/numbers and spaces,
+	// Build kebab-case keyword: lower-case, keep only ASCII letters/numbers and spaces,
 	// then collapse runs of whitespace into single hyphens.
+	// ASCII-only is required so the keyword round-trips safely through ql/<keyword> URL paths
+	// without percent-encoding mismatches.
 	const keyword = trimmedTitle
 		.toLowerCase()
-		.replace(/[^\p{L}\p{N}\s]/gu, ' ')
+		.replace(/[^a-z0-9\s]/g, ' ')
 		.trim()
 		.replace(/\s+/g, '-')
 		.replace(/^-+|-+$/g, '');
