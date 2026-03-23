@@ -32,6 +32,14 @@ async function openLink(url) {
 	}
 }
 
+// Returns true if any saved quick link already points to the given URL.
+async function urlHasExistingLink(url) {
+	const allLinks = await chrome.storage.sync.get(null);
+	return Object.values(allLinks).some(
+		(item) => item && typeof item === 'object' && !Array.isArray(item) && item.url === url,
+	);
+}
+
 chrome.omnibox.onInputStarted.addListener(async () => {
 	await chrome.omnibox.setDefaultSuggestion({
 		description: SUGGESTIONS_PROMPT_EXISTS,
@@ -320,6 +328,13 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 			return;
 		}
 
+		// Check if any existing quick link already points to this URL
+		if (await urlHasExistingLink(urlWithoutParams)) {
+			// User already has a quick link for this URL — mark as suggested so we stop checking
+			await chrome.storage.local.set({ [suggestionKey]: true });
+			return;
+		}
+
 		// Defer to onCompleted so the tab title is available (it isn't at onCommitted time).
 		// Pass the suggestionKey so onCompleted can mark after the keyword check.
 		await chrome.storage.session.set({
@@ -369,6 +384,13 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 	}
 
 	const { keyword, description } = extractSuggestionFieldsFromTitle(tab.title, pending.url);
+
+	// Safety-net check: if a quick link for this URL was saved after onCommitted ran,
+	// don't suggest a duplicate.
+	if (await urlHasExistingLink(pending.url)) {
+		await chrome.storage.local.set({ [pending.suggestionKey]: true });
+		return;
+	}
 
 	// Check if keyword already exists — if so, mark as suggested and skip.
 	// (The keyword is now title-based; if it conflicts we don't suggest rather
