@@ -35,6 +35,10 @@ No more bookmark folders. No more typing full URLs. Just instant access to every
 
 Version History
 
+1.9
+- Fuzzy keyword matching now works in the address bar too — typing partial characters from a keyword surfaces matching links with each matched character highlighted
+- "Exclude query parameters" option is now only shown when creating a new link (not when editing), and is unchecked by default
+
 1.8
 - Copy URL button on each quick link card — instantly copies the link's URL to your clipboard
 - Delete moved into Edit — open a link's edit form and scroll down to delete it (with confirmation)

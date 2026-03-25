@@ -3,6 +3,7 @@ import { extractSuggestionFieldsFromTitle, stripQueryParams } from './service-wo
 document.addEventListener('DOMContentLoaded', async () => {
   const urlInput = document.getElementById('url');
   const stripQueryParamsToggle = document.getElementById('stripQueryParamsToggle');
+  const toggleGroup = stripQueryParamsToggle.closest('.toggle-group');
   const keywordInput = document.getElementById('keyword');
   const descriptionInput = document.getElementById('description');
   const form = document.getElementById('suggestionForm');
@@ -103,11 +104,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     showFormView();
     
     const { url, keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(pendingTitle, pendingUrl);
-    originalUrlWithParams = originalUrl;
-    urlInput.value = url;
+    originalUrlWithParams = originalUrl || pendingUrl;
+    urlInput.value = originalUrlWithParams;
     keywordInput.value = keyword;
     descriptionInput.value = description;
-    stripQueryParamsToggle.checked = true;
     
     // Check if pre-filled keyword matches existing
     await updateKeywordWarning(keyword);
@@ -137,10 +137,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       formTitle.textContent = 'Edit Quick Link';
       saveBtn.textContent = 'Update';
       deleteBtn.classList.remove('hidden');
+      toggleGroup.classList.add('hidden');
     } else {
       formTitle.textContent = 'Add New Quick Link';
       saveBtn.textContent = 'Save';
       deleteBtn.classList.add('hidden');
+      toggleGroup.classList.remove('hidden');
+      stripQueryParamsToggle.checked = false;
     }
   }
 
@@ -336,7 +339,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       urlInput.value = suggestion.url;
       keywordInput.value = keyword;
       descriptionInput.value = suggestion.description || '';
-      stripQueryParamsToggle.checked = true;
       
       showFormView(true);
       descriptionInput.focus();
@@ -380,15 +382,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     editingKeyword = null;
     originalUrlWithParams = null;
     form.reset();
-    stripQueryParamsToggle.checked = true;
     
     // Get the current active tab's URL and title
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0]?.url) {
-        const { url, keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title, tabs[0].url);
-        originalUrlWithParams = originalUrl;
-        urlInput.value = url;
+        const { keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title, tabs[0].url);
+        originalUrlWithParams = originalUrl || tabs[0].url;
+        urlInput.value = originalUrlWithParams;
         keywordInput.value = keyword;
         descriptionInput.value = description;
         
