@@ -11,13 +11,19 @@ const SUGGESTIONS_PROMPT_EXISTS = 'Type to select a quick link or enter a new UR
 const SUGGESTIONS_PROMPT_NONE =
 	'No quick links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
-// Returns true if every character of input appears in keyword in order (subsequence match)
+// Returns the index of the first matched character if input is a subsequence of keyword,
+// or -1 if it is not a match. The earlier the first match, the higher the quality.
 function fuzzyMatchKeyword(keyword, input) {
+	if (input.length === 0) return -1;
 	let inputIndex = 0;
+	let firstMatchIndex = -1;
 	for (let keywordIndex = 0; keywordIndex < keyword.length && inputIndex < input.length; keywordIndex++) {
-		if (keyword[keywordIndex] === input[inputIndex]) inputIndex++;
+		if (keyword[keywordIndex] === input[inputIndex]) {
+			if (firstMatchIndex === -1) firstMatchIndex = keywordIndex;
+			inputIndex++;
+		}
 	}
-	return inputIndex === input.length;
+	return inputIndex === input.length ? firstMatchIndex : -1;
 }
 
 // Wraps each matched character in <match> tags for omnibox highlighting
@@ -127,6 +133,7 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 			const keywordLower = keyword.toLowerCase();
 			const inputLower = trimmedInput.toLowerCase();
 			let matchScore = 0;
+			let fuzzyMatchStart = -1;
 			let highlightedKeyword;
 			let highlightedDescription;
 
@@ -142,10 +149,13 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 				matchScore = 25;
 				highlightedKeyword = keyword;
 				highlightedDescription = highlightMatches(description);
-			} else if (fuzzyMatchKeyword(keywordLower, inputLower)) {
-				matchScore = 10;
-				highlightedKeyword = fuzzyHighlightKeyword(keyword, inputLower);
-				highlightedDescription = description;
+			} else {
+				fuzzyMatchStart = fuzzyMatchKeyword(keywordLower, inputLower);
+				if (fuzzyMatchStart !== -1) {
+					matchScore = 10;
+					highlightedKeyword = fuzzyHighlightKeyword(keyword, inputLower);
+					highlightedDescription = description;
+				}
 			}
 
 			if (matchScore === 0) return null;
@@ -154,16 +164,22 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 				content: keyword,
 				description: `${highlightedKeyword} - ${highlightedDescription}${urlDim}`,
 				matchScore,
+				fuzzyMatchStart,
 			};
 		})
 		.filter(Boolean);
 
-	// Sort by match score (highest first), then by usage frequency
+	// Sort by match score (highest first), then by fuzzy match start position for fuzzy
+	// results (earlier first-character match = better quality), then by usage frequency
 	filteredSuggestions.sort((a, b) => {
 		if (b.matchScore !== a.matchScore) {
 			return b.matchScore - a.matchScore;
 		}
-		// If same match score, prefer more recently or frequently used
+		// For fuzzy matches, prefer the one whose first matched character appears earlier
+		if (a.matchScore === 10 && a.fuzzyMatchStart !== b.fuzzyMatchStart) {
+			return a.fuzzyMatchStart - b.fuzzyMatchStart;
+		}
+		// Fall back to usage frequency
 		const aItem = allItems[a.content];
 		const bItem = allItems[b.content];
 		const aScore = (aItem?.timesUsed || 0) + (aItem?.lastUsed || 0) / 1000000000;
