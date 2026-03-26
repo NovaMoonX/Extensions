@@ -540,7 +540,7 @@ kbd {
   opacity: 1;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn, .copy-btn {
   padding: 4px 8px;
   border: none;
   border-radius: 3px;
@@ -558,13 +558,31 @@ kbd {
   background-color: #7c3aed;
 }
 
-.delete-btn {
-  background-color: #ef4444;
-  color: white;
+.copy-btn {
+  background-color: #e5e7eb;
+  color: #374151;
 }
 
-.delete-btn:hover {
-  background-color: #dc2626;
+.copy-btn:hover {
+  background-color: #d1d5db;
+}
+
+.delete-link {
+  width: 100%;
+  padding: 7px 12px;
+  margin-top: 8px;
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.delete-link:hover {
+  background-color: #fee2e2;
+  border-color: #ef4444;
 }
 
 .suggestion-description {
@@ -735,6 +753,26 @@ kbd {
 
   .suggestion-url {
     color: #888;
+  }
+
+  .copy-btn {
+    background-color: #3d3d3d;
+    color: #ccc;
+  }
+
+  .copy-btn:hover {
+    background-color: #4a4a4a;
+    color: #e0e0e0;
+  }
+
+  .delete-link {
+    color: #f87171;
+    border-color: #7f1d1d;
+  }
+
+  .delete-link:hover {
+    background-color: #3d1f1f;
+    border-color: #f87171;
   }
 
   .empty-state {

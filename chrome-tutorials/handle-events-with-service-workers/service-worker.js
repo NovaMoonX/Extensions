@@ -11,6 +11,37 @@ const SUGGESTIONS_PROMPT_EXISTS = 'Type to select a quick link or enter a new UR
 const SUGGESTIONS_PROMPT_NONE =
 	'No quick links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
+// Returns the index of the first matched character if input is a subsequence of keyword,
+// or -1 if it is not a match. The earlier the first match, the higher the quality.
+function fuzzyMatchKeyword(keyword, input) {
+	if (input.length === 0) return -1;
+	let inputIndex = 0;
+	let firstMatchIndex = -1;
+	for (let keywordIndex = 0; keywordIndex < keyword.length && inputIndex < input.length; keywordIndex++) {
+		if (keyword[keywordIndex] === input[inputIndex]) {
+			if (firstMatchIndex === -1) firstMatchIndex = keywordIndex;
+			inputIndex++;
+		}
+	}
+	return inputIndex === input.length ? firstMatchIndex : -1;
+}
+
+// Wraps each matched character in <match> tags for omnibox highlighting
+function fuzzyHighlightKeyword(keyword, inputLower) {
+	const keywordLower = keyword.toLowerCase();
+	let result = '';
+	let inputIndex = 0;
+	for (let keywordIndex = 0; keywordIndex < keyword.length; keywordIndex++) {
+		if (inputIndex < inputLower.length && keywordLower[keywordIndex] === inputLower[inputIndex]) {
+			result += `<match>${keyword[keywordIndex]}</match>`;
+			inputIndex++;
+		} else {
+			result += keyword[keywordIndex];
+		}
+	}
+	return result;
+}
+
 async function updateHistory(input) {
 	const suggestion = await chrome.storage.sync.get(input);
 
@@ -82,56 +113,73 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 		}));
 	};
 
-	const suggestions = suggestionKeys.map((keyword) => {
-		const item = allItems[keyword];
-		const description = item?.description || '';
-		// Escape XML special characters in URL for omnibox
-		const escapedUrl = item?.url ? item.url.replace(/&/g, '&amp;') : '';
-		const url = escapedUrl ? `<dim> • <url>${escapedUrl}</url></dim>` : '';
+	const highlightMatches = (text) => {
+		const regex = new RegExp(`(${trimmedInput})`, 'gi');
+		return text.replace(regex, '<match>$1</match>');
+	};
 
-		// Calculate match score for ranking
-		const keywordLower = keyword.toLowerCase();
-		const inputLower = trimmedInput.toLowerCase();
-		let matchScore = 0;
+	const filteredSuggestions = suggestionKeys
+		.map((keyword) => {
+			const item = allItems[keyword];
+			// Skip non-quick-link keys (blockedSuggestions, settings, visit history, etc.)
+			if (!item || typeof item !== 'object' || Array.isArray(item) || !item.url) {
+				return null;
+			}
 
-		if (keywordLower.startsWith(inputLower)) {
-			matchScore = 100; // Prefix match gets highest score
-		} else if (keywordLower.includes(inputLower)) {
-			matchScore = 50; // Contains match
-		} else if (description.toLowerCase().includes(inputLower)) {
-			matchScore = 25; // Description match
-		}
+			const description = item.description || '';
+			const escapedUrl = item.url.replace(/&/g, '&amp;');
+			const urlDim = `<dim> • <url>${escapedUrl}</url></dim>`;
 
-		// Highlight matched parts of keyword and description
-		const highlightMatches = (text) => {
-			const regex = new RegExp(`(${trimmedInput})`, 'gi');
-			return text.replace(regex, '<match>$1</match>');
-		};
+			const keywordLower = keyword.toLowerCase();
+			const inputLower = trimmedInput.toLowerCase();
+			let matchScore = 0;
+			let fuzzyMatchStart = -1;
+			let highlightedKeyword;
+			let highlightedDescription;
 
-		const highlightedKeyword = highlightMatches(keyword);
-		const highlightedDescription = highlightMatches(description);
+			if (keywordLower.startsWith(inputLower)) {
+				matchScore = 100;
+				highlightedKeyword = highlightMatches(keyword);
+				highlightedDescription = highlightMatches(description);
+			} else if (keywordLower.includes(inputLower)) {
+				matchScore = 50;
+				highlightedKeyword = highlightMatches(keyword);
+				highlightedDescription = highlightMatches(description);
+			} else if (description.toLowerCase().includes(inputLower)) {
+				matchScore = 25;
+				highlightedKeyword = keyword;
+				highlightedDescription = highlightMatches(description);
+			} else {
+				fuzzyMatchStart = fuzzyMatchKeyword(keywordLower, inputLower);
+				if (fuzzyMatchStart !== -1) {
+					matchScore = 10;
+					highlightedKeyword = fuzzyHighlightKeyword(keyword, inputLower);
+					highlightedDescription = description;
+				}
+			}
 
-		return {
-			content: keyword,
-			description: `${highlightedKeyword} - ${highlightedDescription}${url}`,
-			matchScore,
-			rawKeyword: keyword,
-			rawDescription: description,
-		};
-	});
+			if (matchScore === 0) return null;
 
-	const filteredSuggestions = suggestions.filter(
-		(suggestion) =>
-			suggestion.content.toLowerCase().includes(trimmedInput.toLowerCase()) ||
-			suggestion.description.toLowerCase().includes(trimmedInput.toLowerCase()),
-	);
+			return {
+				content: keyword,
+				description: `${highlightedKeyword} - ${highlightedDescription}${urlDim}`,
+				matchScore,
+				fuzzyMatchStart,
+			};
+		})
+		.filter(Boolean);
 
-	// Sort by match score (highest first), then by usage frequency
+	// Sort by match score (highest first), then by fuzzy match start position for fuzzy
+	// results (earlier first-character match = better quality), then by usage frequency
 	filteredSuggestions.sort((a, b) => {
 		if (b.matchScore !== a.matchScore) {
 			return b.matchScore - a.matchScore;
 		}
-		// If same match score, prefer more recently or frequently used
+		// For fuzzy matches, prefer the one whose first matched character appears earlier
+		if (a.matchScore === 10 && a.fuzzyMatchStart !== b.fuzzyMatchStart) {
+			return a.fuzzyMatchStart - b.fuzzyMatchStart;
+		}
+		// Fall back to usage frequency
 		const aItem = allItems[a.content];
 		const bItem = allItems[b.content];
 		const aScore = (aItem?.timesUsed || 0) + (aItem?.lastUsed || 0) / 1000000000;

@@ -3,6 +3,7 @@ import { extractSuggestionFieldsFromTitle, stripQueryParams } from './service-wo
 document.addEventListener('DOMContentLoaded', async () => {
   const urlInput = document.getElementById('url');
   const stripQueryParamsToggle = document.getElementById('stripQueryParamsToggle');
+  const toggleGroup = stripQueryParamsToggle.closest('.toggle-group');
   const keywordInput = document.getElementById('keyword');
   const descriptionInput = document.getElementById('description');
   const form = document.getElementById('suggestionForm');
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('saveBtn');
   const searchInput = document.getElementById('searchInput');
   const keywordWarning = document.getElementById('keywordWarning');
+  const deleteBtn = document.getElementById('deleteBtn');
   
   // Suggestion view elements
   const suggestionPrompt = document.getElementById('suggestionPrompt');
@@ -102,11 +104,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     showFormView();
     
     const { url, keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(pendingTitle, pendingUrl);
-    originalUrlWithParams = originalUrl;
-    urlInput.value = url;
+    originalUrlWithParams = originalUrl || pendingUrl;
+    urlInput.value = originalUrlWithParams;
     keywordInput.value = keyword;
     descriptionInput.value = description;
-    stripQueryParamsToggle.checked = true;
     
     // Check if pre-filled keyword matches existing
     await updateKeywordWarning(keyword);
@@ -135,9 +136,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isEdit) {
       formTitle.textContent = 'Edit Quick Link';
       saveBtn.textContent = 'Update';
+      deleteBtn.classList.remove('hidden');
+      toggleGroup.classList.add('hidden');
     } else {
       formTitle.textContent = 'Add New Quick Link';
       saveBtn.textContent = 'Save';
+      deleteBtn.classList.add('hidden');
+      toggleGroup.classList.remove('hidden');
+      stripQueryParamsToggle.checked = false;
     }
   }
 
@@ -229,6 +235,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.sync.set({ settings });
   }
 
+  // Returns true if every character in searchTerm appears in keyword in order (subsequence match)
+  function fuzzyMatchKeyword(keyword, searchTerm) {
+    let searchIdx = 0;
+    for (let keyIdx = 0; keyIdx < keyword.length && searchIdx < searchTerm.length; keyIdx++) {
+      if (keyword[keyIdx] === searchTerm[searchIdx]) searchIdx++;
+    }
+    return searchIdx === searchTerm.length;
+  }
+
   async function loadSuggestions(searchTerm = '') {
     // Get all suggestions from storage
     const suggestionsMap = await chrome.storage.sync.get(null);
@@ -251,18 +266,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Filter suggestions based on search term
-    const filteredKeys = searchTerm
-      ? suggestionKeys.filter(keyword => {
-          const suggestion = suggestionsMap[keyword];
-          const searchLower = searchTerm.toLowerCase();
-          return (
-            keyword.toLowerCase().includes(searchLower) ||
-            (suggestion.description && suggestion.description.toLowerCase().includes(searchLower)) ||
-            suggestion.url.toLowerCase().includes(searchLower)
-          );
-        })
-      : suggestionKeys;
+    // Filter suggestions based on search term, with fuzzy keyword matching ranked last
+    let filteredKeys;
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const substringMatches = [];
+      const fuzzyMatches = [];
+
+      for (const keyword of suggestionKeys) {
+        const suggestion = suggestionsMap[keyword];
+        const keywordLower = keyword.toLowerCase();
+
+        const isSubstringMatch =
+          keywordLower.includes(searchLower) ||
+          (suggestion.description && suggestion.description.toLowerCase().includes(searchLower)) ||
+          suggestion.url.toLowerCase().includes(searchLower);
+
+        if (isSubstringMatch) {
+          substringMatches.push(keyword);
+        } else if (fuzzyMatchKeyword(keywordLower, searchLower)) {
+          fuzzyMatches.push(keyword);
+        }
+      }
+
+      filteredKeys = [...substringMatches, ...fuzzyMatches];
+    } else {
+      filteredKeys = suggestionKeys;
+    }
 
     if (filteredKeys.length === 0) {
       suggestionsList.innerHTML = '<div class="empty-state">No matching suggestions found.</div>';
@@ -278,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <a href="${suggestion.url}" target="_blank" class="suggestion-keyword">${keyword}</a>
               <div class="suggestion-actions">
                 <button class="edit-btn" data-keyword="${keyword}">Edit</button>
-                <button class="delete-btn" data-keyword="${keyword}">Delete</button>
+                <button class="copy-btn" data-keyword="${keyword}" data-url="${suggestion.url}">Copy URL</button>
               </div>
             </div>
             <div class="suggestion-description">${suggestion.description || keyword}</div>
@@ -293,8 +323,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', handleEdit);
     });
 
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', handleDelete);
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', handleCopy);
     });
   }
 
@@ -309,27 +339,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       urlInput.value = suggestion.url;
       keywordInput.value = keyword;
       descriptionInput.value = suggestion.description || '';
-      stripQueryParamsToggle.checked = true;
       
       showFormView(true);
       descriptionInput.focus();
     }
   }
 
-  async function handleDelete(e) {
-    const keyword = e.target.dataset.keyword;
-    
-    if (!confirm(`Delete your go-to "${keyword}"?`)) {
-      return;
-    }
-
+  async function handleCopy(e) {
+    const url = e.target.dataset.url;
     try {
-      // Remove suggestion from storage
-      await chrome.storage.sync.remove(keyword);
-
-      loadSuggestions();
+      await navigator.clipboard.writeText(url);
+      const btn = e.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 1500);
     } catch (error) {
-      console.error('Error deleting suggestion:', error);
+      console.error('Error copying URL:', error);
     }
   }
 
@@ -355,15 +382,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     editingKeyword = null;
     originalUrlWithParams = null;
     form.reset();
-    stripQueryParamsToggle.checked = true;
     
     // Get the current active tab's URL and title
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0]?.url) {
-        const { url, keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title, tabs[0].url);
-        originalUrlWithParams = originalUrl;
-        urlInput.value = url;
+        const { keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title, tabs[0].url);
+        originalUrlWithParams = originalUrl || tabs[0].url;
+        urlInput.value = originalUrlWithParams;
         keywordInput.value = keyword;
         descriptionInput.value = description;
         
@@ -439,6 +465,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         showListView();
       }
     });
+  });
+
+  deleteBtn.addEventListener('click', async () => {
+    if (!editingKeyword) {
+      console.warn('Delete button clicked without an active editing keyword');
+      return;
+    }
+
+    if (!confirm(`Delete your go-to "${editingKeyword}"?`)) {
+      return;
+    }
+
+    try {
+      await chrome.storage.sync.remove(editingKeyword);
+      editingKeyword = null;
+      form.reset();
+      showListView();
+    } catch (error) {
+      console.error('Error deleting suggestion:', error);
+    }
   });
 
   function showMessage(text, type) {

@@ -16,7 +16,7 @@ Visit a site frequently? We'll suggest creating a quick link automatically, with
 Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Never touch your mouse.
 
 🔍 Search Your Links
-Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering finds what you need.
+Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering finds what you need — and fuzzy keyword matching surfaces links even when you only remember part of the keyword.
 
 🚫 Manage Blocked Suggestions
 Sites you've dismissed are tracked in a dedicated Blocked Suggestions view — searchable and easy to unblock whenever you change your mind.
@@ -34,6 +34,11 @@ No more bookmark folders. No more typing full URLs. Just instant access to every
 ---
 
 Version History
+
+1.8
+- Copy URL button on each quick link card — instantly copies the link's URL to your clipboard
+- Delete moved into Edit — open a link's edit form and scroll down to delete it (with confirmation)
+- Smarter search: fuzzy keyword matching now surfaces links even when you only remember part of the keyword (e.g. typing "my-si" finds "my-fav-site"), ranked below exact matches
 
 1.7
 - Auto-suggestions now use the page's tab title for the keyword and description — more meaningful and readable shortcuts
