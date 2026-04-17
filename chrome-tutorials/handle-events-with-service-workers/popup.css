@@ -784,6 +784,25 @@ kbd {
   margin-top: 8px;
 }
 
+.form-notes-btn {
+  width: 100%;
+  padding: 7px 12px;
+  margin-top: 8px;
+  background-color: transparent;
+  color: #8b5cf6;
+  border: 1px solid #c4b5fd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: left;
+}
+
+.form-notes-btn:hover {
+  background-color: #f3f0ff;
+  border-color: #8b5cf6;
+}
+
 /* Make suggestion-item cards feel clickable */
 .suggestion-item {
   cursor: pointer;
@@ -1007,6 +1026,16 @@ kbd {
   #blockedSearchInput:focus {
     border-color: #a78bfa;
     box-shadow: 0 0 4px rgba(167, 139, 250, 0.5);
+  }
+
+  .form-notes-btn {
+    color: #a78bfa;
+    border-color: #4c1d95;
+  }
+
+  .form-notes-btn:hover {
+    background-color: #2d2366;
+    border-color: #a78bfa;
   }
 
   /* Detail view dark mode */

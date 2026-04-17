@@ -301,14 +301,20 @@ chrome.commands.onCommand.addListener(async (command) => {
 	if (command === 'add-suggestion') {
 		// Get the current active tab
 		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-		if (tabs[0]?.url) {
-			// Store URL and tab title in session and open popup
+		if (!tabs[0]?.url) return;
+
+		// If the current URL already has a quick link, open its detail view instead
+		const existingKeyword = await findQuickLinkKeywordForUrl(tabs[0].url);
+		if (existingKeyword) {
+			await chrome.storage.session.set({ openDetailForKeyword: existingKeyword });
+		} else {
+			// Store URL and tab title in session to pre-fill the add form
 			await chrome.storage.session.set({
 				pendingUrl: tabs[0].url,
 				pendingTitle: tabs[0].title || '',
 			});
-			chrome.action.openPopup();
 		}
+		chrome.action.openPopup();
 	} else if (command === 'open-notes') {
 		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 		if (!tabs[0]?.url) return;
@@ -566,6 +572,7 @@ chrome.runtime.onConnect.addListener((port) => {
 				'suggestedGoLink',
 				'openNotesForKeyword',
 				'openNotesForCurrentPage',
+				'openDetailForKeyword',
 			]);
 		});
 	}

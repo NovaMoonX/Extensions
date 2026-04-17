@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('searchInput');
   const keywordWarning = document.getElementById('keywordWarning');
   const deleteBtn = document.getElementById('deleteBtn');
+  const formNotesBtn = document.getElementById('formNotesBtn');
   
   // Suggestion view elements
   const suggestionPrompt = document.getElementById('suggestionPrompt');
@@ -127,13 +128,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     'suggestedGoLink',
     'openNotesForKeyword',
     'openNotesForCurrentPage',
+    'openDetailForKeyword',
   ]);
-  const { pendingUrl, pendingTitle, suggestedGoLink, openNotesForKeyword, openNotesForCurrentPage } = sessionData;
+  const { pendingUrl, pendingTitle, suggestedGoLink, openNotesForKeyword, openNotesForCurrentPage, openDetailForKeyword } = sessionData;
   
   if (suggestedGoLink) {
     // Show suggestion view for frequent visits
     suggestedData = suggestedGoLink;
     showSuggestionView(suggestedGoLink);
+  } else if (openDetailForKeyword) {
+    await chrome.storage.session.remove('openDetailForKeyword');
+    showDetailView(openDetailForKeyword);
   } else if (openNotesForKeyword) {
     await chrome.storage.session.remove('openNotesForKeyword');
     showNotesView(openNotesForKeyword, false);
@@ -180,11 +185,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       formTitle.textContent = 'Edit Quick Link';
       saveBtn.textContent = 'Update';
       deleteBtn.classList.remove('hidden');
+      formNotesBtn.classList.remove('hidden');
       toggleGroup.classList.add('hidden');
     } else {
       formTitle.textContent = 'Add New Quick Link';
       saveBtn.textContent = 'Save';
       deleteBtn.classList.add('hidden');
+      formNotesBtn.classList.add('hidden');
       toggleGroup.classList.remove('hidden');
       stripQueryParamsToggle.checked = false;
     }
@@ -500,6 +507,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   autoSuggestionsToggle.addEventListener('change', saveSettings);
   autoOpenNotesToggle.addEventListener('change', saveSettings);
+
+  // Notes button in the edit form
+  formNotesBtn.addEventListener('click', () => {
+    if (editingKeyword) {
+      showNotesView(editingKeyword, false);
+    }
+  });
 
   // Detail view events
   backFromDetailBtn.addEventListener('click', showListView);
