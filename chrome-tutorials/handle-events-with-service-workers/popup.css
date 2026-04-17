@@ -603,6 +603,196 @@ kbd {
   color: #999;
 }
 
+/* === Detail View === */
+.detail-content {
+  background-color: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-field {
+  margin-bottom: 12px;
+}
+
+.detail-field:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.detail-keyword-value {
+  color: #8b5cf6;
+}
+
+.detail-url-value {
+  font-size: 12px;
+  color: #666;
+  font-weight: 400;
+  word-break: break-all;
+  text-decoration: none;
+}
+
+.detail-url-value:hover {
+  color: #8b5cf6;
+  text-decoration: underline;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-notes-btn {
+  flex: 2;
+  padding: 8px 12px;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.detail-notes-btn:hover {
+  background-color: #7c3aed;
+}
+
+.detail-edit-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.detail-edit-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* === Notes View === */
+.notes-keyword-label {
+  font-size: 12px;
+  color: #8b5cf6;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  background-color: #f3f0ff;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.notes-text-display {
+  min-height: 120px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.notes-text-display.empty {
+  color: #aaa;
+  font-style: italic;
+}
+
+.edit-note-action {
+  width: 100%;
+  padding: 7px 12px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.edit-note-action:hover {
+  background-color: #e0e0e0;
+}
+
+.note-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  resize: vertical;
+  color: #333;
+  background-color: #fff;
+}
+
+.note-textarea:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 4px rgba(139, 92, 246, 0.3);
+}
+
+.notes-no-link {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.notes-no-link-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.notes-no-link p {
+  margin: 0 0 8px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.notes-hint {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 16px !important;
+}
+
+.notes-no-link .save {
+  margin-top: 8px;
+}
+
+/* Make suggestion-item cards feel clickable */
+.suggestion-item {
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  border-color: #c4b5fd;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #1e1e1e;
@@ -817,5 +1007,88 @@ kbd {
   #blockedSearchInput:focus {
     border-color: #a78bfa;
     box-shadow: 0 0 4px rgba(167, 139, 250, 0.5);
+  }
+
+  /* Detail view dark mode */
+  .detail-content {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+
+  .detail-label {
+    color: #888;
+  }
+
+  .detail-value {
+    color: #e0e0e0;
+  }
+
+  .detail-keyword-value {
+    color: #a78bfa;
+  }
+
+  .detail-url-value {
+    color: #aaa;
+  }
+
+  .detail-url-value:hover {
+    color: #a78bfa;
+  }
+
+  .detail-edit-btn {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  .detail-edit-btn:hover {
+    background-color: #3d3d3d;
+  }
+
+  /* Notes view dark mode */
+  .notes-keyword-label {
+    color: #a78bfa;
+    background-color: #2d2366;
+  }
+
+  .notes-text-display {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .notes-text-display.empty {
+    color: #666;
+  }
+
+  .edit-note-action {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  .edit-note-action:hover {
+    background-color: #3d3d3d;
+  }
+
+  .note-textarea {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .note-textarea:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 4px rgba(167, 139, 250, 0.5);
+  }
+
+  .notes-no-link p {
+    color: #aaa;
+  }
+
+  .notes-hint {
+    color: #666 !important;
+  }
+
+  .suggestion-item:hover {
+    border-color: #6d28d9;
   }
 }

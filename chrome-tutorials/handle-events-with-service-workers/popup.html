@@ -119,6 +119,80 @@
 						<span class="toggle-slider"></span>
 					</label>
 				</div>
+				<div class="setting-item">
+					<div class="setting-info">
+						<div class="setting-label">Auto-Open Notes</div>
+						<div class="setting-description">Automatically open the notes panel when you land on a page that has saved notes</div>
+					</div>
+					<label class="toggle-switch">
+						<input type="checkbox" id="autoOpenNotesToggle" checked />
+						<span class="toggle-slider"></span>
+					</label>
+				</div>
+			</div>
+		</div>
+
+		<div id="detailView" class="hidden">
+			<div class="view-header">
+				<button id="backFromDetailBtn" class="back-btn">← Back</button>
+				<h2>Quick Link</h2>
+			</div>
+
+			<div class="detail-content">
+				<div class="detail-field">
+					<div class="detail-label">Keyword</div>
+					<div id="detailKeyword" class="detail-value detail-keyword-value"></div>
+				</div>
+				<div class="detail-field">
+					<div class="detail-label">Description</div>
+					<div id="detailDescription" class="detail-value"></div>
+				</div>
+				<div class="detail-field">
+					<div class="detail-label">URL</div>
+					<a id="detailUrl" class="detail-value detail-url-value" href="#" target="_blank"></a>
+				</div>
+			</div>
+
+			<div class="detail-actions">
+				<button id="detailNotesBtn" class="detail-notes-btn">📝 Notes</button>
+				<button id="detailEditBtn" class="detail-edit-btn">✏️ Edit</button>
+			</div>
+		</div>
+
+		<div id="notesView" class="hidden">
+			<div class="view-header">
+				<button id="backFromNotesBtn" class="back-btn">← Back</button>
+				<h2>Notes</h2>
+			</div>
+
+			<!-- Shown when no quick link exists for the current page -->
+			<div id="noQuickLinkPrompt" class="hidden">
+				<div class="notes-no-link">
+					<div class="notes-no-link-icon">📝</div>
+					<p>No quick link found for this page.</p>
+					<p class="notes-hint">Create a quick link first, then you can add notes to it.</p>
+					<button id="createLinkFromNotesBtn" class="save">Create Quick Link</button>
+				</div>
+			</div>
+
+			<!-- Shown when a quick link exists -->
+			<div id="notesContent" class="hidden">
+				<div id="notesKeywordLabel" class="notes-keyword-label"></div>
+
+				<!-- View mode -->
+				<div id="notesViewMode">
+					<div id="notesTextDisplay" class="notes-text-display"></div>
+					<button id="editNoteBtn" class="edit-note-action">✏️ Edit Note</button>
+				</div>
+
+				<!-- Edit mode -->
+				<div id="notesEditMode" class="hidden">
+					<textarea id="noteTextarea" class="note-textarea" placeholder="Write your notes here..."></textarea>
+					<div class="button-group">
+						<button id="saveNoteBtn" class="save">Save</button>
+						<button id="cancelNoteEditBtn" class="cancel">Cancel</button>
+					</div>
+				</div>
 			</div>
 		</div>
 

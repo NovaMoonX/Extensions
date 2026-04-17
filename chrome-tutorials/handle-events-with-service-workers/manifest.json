@@ -1,7 +1,7 @@
 {
 	"name": "Quick Links",
 	"description": "Save and search your links instantly using the omnibox.",
-	"version": "1.8",
+	"version": "1.9",
 	"manifest_version": 3,
 	"icons": {
 		"16": "images/logo-16.png",
@@ -28,6 +28,13 @@
 				"mac": "Alt+L"
 			},
 			"description": "Add current page as quick link"
+		},
+		"open-notes": {
+			"suggested_key": {
+				"default": "Ctrl+Shift+M",
+				"mac": "Alt+Shift+M"
+			},
+			"description": "Open notes for current page"
 		}
 	},
 	"omnibox": {

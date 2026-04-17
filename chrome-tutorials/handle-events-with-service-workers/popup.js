@@ -44,12 +44,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Settings view elements
   const settingsView = document.getElementById('settingsView');
   const autoSuggestionsToggle = document.getElementById('autoSuggestionsToggle');
+  const autoOpenNotesToggle = document.getElementById('autoOpenNotesToggle');
   const backFromSettingsBtn = document.getElementById('backFromSettingsBtn');
+
+  // Detail view elements
+  const detailView = document.getElementById('detailView');
+  const backFromDetailBtn = document.getElementById('backFromDetailBtn');
+  const detailKeywordEl = document.getElementById('detailKeyword');
+  const detailDescriptionEl = document.getElementById('detailDescription');
+  const detailUrlEl = document.getElementById('detailUrl');
+  const detailNotesBtn = document.getElementById('detailNotesBtn');
+  const detailEditBtn = document.getElementById('detailEditBtn');
+
+  // Notes view elements
+  const notesView = document.getElementById('notesView');
+  const backFromNotesBtn = document.getElementById('backFromNotesBtn');
+  const noQuickLinkPrompt = document.getElementById('noQuickLinkPrompt');
+  const notesContent = document.getElementById('notesContent');
+  const notesKeywordLabel = document.getElementById('notesKeywordLabel');
+  const notesViewMode = document.getElementById('notesViewMode');
+  const notesTextDisplay = document.getElementById('notesTextDisplay');
+  const editNoteBtn = document.getElementById('editNoteBtn');
+  const notesEditMode = document.getElementById('notesEditMode');
+  const noteTextarea = document.getElementById('noteTextarea');
+  const saveNoteBtn = document.getElementById('saveNoteBtn');
+  const cancelNoteEditBtn = document.getElementById('cancelNoteEditBtn');
+  const createLinkFromNotesBtn = document.getElementById('createLinkFromNotesBtn');
 
   let editingKeyword = null;
   let allSuggestions = { keys: [], map: {} };
   let suggestedData = null;
   let originalUrlWithParams = null;
+  let currentDetailKeyword = null;
+  let currentNoteKeyword = null;
+  let noteFromDetailView = false;
+  let originalNoteText = null;
 
   // Function to check if keyword exists
   async function checkKeywordExists(keyword) {
@@ -92,13 +121,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Check if there's a pending URL from omnibox or a suggestion from frequent visits
-  const sessionData = await chrome.storage.session.get(['pendingUrl', 'pendingTitle', 'suggestedGoLink']);
-  const { pendingUrl, pendingTitle, suggestedGoLink } = sessionData;
+  const sessionData = await chrome.storage.session.get([
+    'pendingUrl',
+    'pendingTitle',
+    'suggestedGoLink',
+    'openNotesForKeyword',
+    'openNotesForCurrentPage',
+  ]);
+  const { pendingUrl, pendingTitle, suggestedGoLink, openNotesForKeyword, openNotesForCurrentPage } = sessionData;
   
   if (suggestedGoLink) {
     // Show suggestion view for frequent visits
     suggestedData = suggestedGoLink;
     showSuggestionView(suggestedGoLink);
+  } else if (openNotesForKeyword) {
+    await chrome.storage.session.remove('openNotesForKeyword');
+    showNotesView(openNotesForKeyword, false);
+  } else if (openNotesForCurrentPage) {
+    await chrome.storage.session.remove('openNotesForCurrentPage');
+    showNotesView(null, false);
   } else if (pendingUrl) {
     // Show form view with pending URL
     showFormView();
@@ -132,6 +173,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   function showFormView(isEdit = false) {
     formView.classList.remove('hidden');
     listView.classList.add('hidden');
+    detailView.classList.add('hidden');
+    notesView.classList.add('hidden');
     
     if (isEdit) {
       formTitle.textContent = 'Edit Quick Link';
@@ -153,6 +196,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     suggestionView.classList.add('hidden');
     blockedView.classList.add('hidden');
     settingsView.classList.add('hidden');
+    detailView.classList.add('hidden');
+    notesView.classList.add('hidden');
     searchInput.value = '';
     loadSuggestions();
     updateBlockedCount();
@@ -171,6 +216,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     listView.classList.add('hidden');
     settingsView.classList.remove('hidden');
     loadSettings();
+  }
+
+  async function showDetailView(keyword) {
+    const result = await chrome.storage.sync.get(keyword);
+    const suggestion = result[keyword];
+    if (!suggestion) return;
+
+    currentDetailKeyword = keyword;
+
+    formView.classList.add('hidden');
+    listView.classList.add('hidden');
+    suggestionView.classList.add('hidden');
+    blockedView.classList.add('hidden');
+    settingsView.classList.add('hidden');
+    notesView.classList.add('hidden');
+
+    detailKeywordEl.textContent = keyword;
+    detailDescriptionEl.textContent = suggestion.description || keyword;
+    detailUrlEl.textContent = suggestion.url;
+    detailUrlEl.href = suggestion.url;
+
+    detailView.classList.remove('hidden');
+  }
+
+  async function showNotesView(keyword, fromDetail) {
+    currentNoteKeyword = keyword;
+    noteFromDetailView = fromDetail;
+
+    formView.classList.add('hidden');
+    listView.classList.add('hidden');
+    suggestionView.classList.add('hidden');
+    blockedView.classList.add('hidden');
+    settingsView.classList.add('hidden');
+    detailView.classList.add('hidden');
+
+    if (!keyword) {
+      noQuickLinkPrompt.classList.remove('hidden');
+      notesContent.classList.add('hidden');
+    } else {
+      noQuickLinkPrompt.classList.add('hidden');
+      notesContent.classList.remove('hidden');
+
+      notesKeywordLabel.textContent = keyword;
+
+      const noteKey = `note_${keyword}`;
+      const result = await chrome.storage.sync.get(noteKey);
+      const noteText = result[noteKey] || '';
+      originalNoteText = noteText;
+
+      if (noteText) {
+        notesTextDisplay.textContent = noteText;
+        notesTextDisplay.classList.remove('empty');
+        notesViewMode.classList.remove('hidden');
+        notesEditMode.classList.add('hidden');
+      } else {
+        notesTextDisplay.textContent = '';
+        notesViewMode.classList.add('hidden');
+        notesEditMode.classList.remove('hidden');
+        noteTextarea.value = '';
+        noteTextarea.focus();
+      }
+    }
+
+    notesView.classList.remove('hidden');
   }
 
   async function updateBlockedCount() {
@@ -227,11 +336,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadSettings() {
     const { settings = {} } = await chrome.storage.sync.get('settings');
     autoSuggestionsToggle.checked = settings.autoSuggestionsEnabled !== false;
+    autoOpenNotesToggle.checked = settings.autoOpenNotes !== false;
   }
 
   async function saveSettings() {
     const { settings = {} } = await chrome.storage.sync.get('settings');
     settings.autoSuggestionsEnabled = autoSuggestionsToggle.checked;
+    settings.autoOpenNotes = autoOpenNotesToggle.checked;
     await chrome.storage.sync.set({ settings });
   }
 
@@ -249,10 +360,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const suggestionsMap = await chrome.storage.sync.get(null);
     let suggestionKeys = Object.keys(suggestionsMap);
 
-    // Filter out non-suggestion keys like 'blockedSuggestions' and 'settings'
+    // Filter out non-suggestion keys
     suggestionKeys = suggestionKeys.filter(key => 
       key !== 'blockedSuggestions' && 
       key !== 'settings' &&
+      !key.startsWith('note_') &&
       suggestionsMap[key] && 
       typeof suggestionsMap[key] === 'object' && 
       !Array.isArray(suggestionsMap[key])
@@ -317,16 +429,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       })
       .join('');
-
-    // Attach event listeners
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', handleEdit);
-    });
-
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      btn.addEventListener('click', handleCopy);
-    });
   }
+
+  // Event delegation for suggestion list — handles edit, copy, and card-click for detail view
+  suggestionsList.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('edit-btn')) {
+      await handleEdit(e);
+      return;
+    }
+    if (e.target.classList.contains('copy-btn')) {
+      await handleCopy(e);
+      return;
+    }
+    // Clicking anywhere on the card (except the keyword link or action buttons) opens detail view
+    if (!e.target.closest('.suggestion-keyword') && !e.target.closest('.suggestion-actions')) {
+      const item = e.target.closest('.suggestion-item');
+      if (item) {
+        await showDetailView(item.dataset.keyword);
+      }
+    }
+  });
 
   async function handleEdit(e) {
     const keyword = e.target.dataset.keyword;
@@ -377,6 +499,106 @@ document.addEventListener('DOMContentLoaded', async () => {
   backFromSettingsBtn.addEventListener('click', showListView);
 
   autoSuggestionsToggle.addEventListener('change', saveSettings);
+  autoOpenNotesToggle.addEventListener('change', saveSettings);
+
+  // Detail view events
+  backFromDetailBtn.addEventListener('click', showListView);
+
+  detailNotesBtn.addEventListener('click', () => {
+    showNotesView(currentDetailKeyword, true);
+  });
+
+  detailEditBtn.addEventListener('click', async () => {
+    const result = await chrome.storage.sync.get(currentDetailKeyword);
+    const suggestion = result[currentDetailKeyword];
+    if (suggestion) {
+      editingKeyword = currentDetailKeyword;
+      originalUrlWithParams = null;
+      urlInput.value = suggestion.url;
+      keywordInput.value = currentDetailKeyword;
+      descriptionInput.value = suggestion.description || '';
+      showFormView(true);
+      descriptionInput.focus();
+    }
+  });
+
+  // Notes view events
+  backFromNotesBtn.addEventListener('click', () => {
+    if (noteFromDetailView) {
+      showDetailView(currentNoteKeyword);
+    } else {
+      showListView();
+    }
+  });
+
+  editNoteBtn.addEventListener('click', () => {
+    noteTextarea.value = notesTextDisplay.textContent;
+    notesViewMode.classList.add('hidden');
+    notesEditMode.classList.remove('hidden');
+    noteTextarea.focus();
+  });
+
+  saveNoteBtn.addEventListener('click', async () => {
+    const noteText = noteTextarea.value.trim();
+    const noteKey = `note_${currentNoteKeyword}`;
+
+    if (noteText) {
+      await chrome.storage.sync.set({ [noteKey]: noteText });
+    } else {
+      await chrome.storage.sync.remove(noteKey);
+    }
+
+    originalNoteText = noteText;
+
+    if (noteText) {
+      notesTextDisplay.textContent = noteText;
+      notesTextDisplay.classList.remove('empty');
+    } else {
+      notesTextDisplay.textContent = 'No notes yet.';
+      notesTextDisplay.classList.add('empty');
+    }
+    notesViewMode.classList.remove('hidden');
+    notesEditMode.classList.add('hidden');
+  });
+
+  cancelNoteEditBtn.addEventListener('click', () => {
+    if (originalNoteText) {
+      notesTextDisplay.textContent = originalNoteText;
+      notesTextDisplay.classList.remove('empty');
+      notesViewMode.classList.remove('hidden');
+      notesEditMode.classList.add('hidden');
+    } else {
+      // No existing note — go back
+      if (noteFromDetailView) {
+        showDetailView(currentNoteKeyword);
+      } else {
+        showListView();
+      }
+    }
+  });
+
+  createLinkFromNotesBtn.addEventListener('click', async () => {
+    editingKeyword = null;
+    originalUrlWithParams = null;
+    form.reset();
+
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]?.url) {
+        const { keyword, description, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title, tabs[0].url);
+        originalUrlWithParams = originalUrl || tabs[0].url;
+        urlInput.value = originalUrlWithParams;
+        keywordInput.value = keyword;
+        descriptionInput.value = description;
+        await updateKeywordWarning(keyword);
+      }
+    } catch (error) {
+      console.error('Error getting current tab:', error);
+    }
+
+    showFormView(false);
+    keywordInput.focus();
+  });
 
   addNewBtn.addEventListener('click', async () => {
     editingKeyword = null;

@@ -81,6 +81,24 @@ async function urlHasExistingLink(url) {
 	});
 }
 
+// Returns the keyword of the first saved quick link that matches the given URL, or null.
+async function findQuickLinkKeywordForUrl(url) {
+	const normalizeForComparison = (rawUrl) => {
+		if (!rawUrl || typeof rawUrl !== 'string') return null;
+		return stripQueryParams(rawUrl).replace(/\/+$/, '');
+	};
+
+	const target = normalizeForComparison(url);
+	if (!target) return null;
+
+	const allLinks = await chrome.storage.sync.get(null);
+	for (const [key, item] of Object.entries(allLinks)) {
+		if (!item || typeof item !== 'object' || Array.isArray(item) || !item.url) continue;
+		if (normalizeForComparison(item.url) === target) return key;
+	}
+	return null;
+}
+
 chrome.omnibox.onInputStarted.addListener(async () => {
 	await chrome.omnibox.setDefaultSuggestion({
 		description: SUGGESTIONS_PROMPT_EXISTS,
@@ -291,6 +309,17 @@ chrome.commands.onCommand.addListener(async (command) => {
 			});
 			chrome.action.openPopup();
 		}
+	} else if (command === 'open-notes') {
+		const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+		if (!tabs[0]?.url) return;
+
+		const keyword = await findQuickLinkKeywordForUrl(tabs[0].url);
+		if (keyword) {
+			await chrome.storage.session.set({ openNotesForKeyword: keyword });
+		} else {
+			await chrome.storage.session.set({ openNotesForCurrentPage: true });
+		}
+		chrome.action.openPopup();
 	}
 });
 
@@ -531,7 +560,41 @@ chrome.runtime.onConnect.addListener((port) => {
 	if (port.name === 'popup') {
 		port.onDisconnect.addListener(async () => {
 			// Clear any pending session data when popup closes
-			await chrome.storage.session.remove(['pendingUrl', 'pendingTitle', 'suggestedGoLink']);
+			await chrome.storage.session.remove([
+				'pendingUrl',
+				'pendingTitle',
+				'suggestedGoLink',
+				'openNotesForKeyword',
+				'openNotesForCurrentPage',
+			]);
 		});
 	}
+});
+
+// Auto-open notes when user lands on a page that has saved notes for a quick link.
+// This runs as a separate listener so it is independent of the auto-suggestion flow.
+chrome.webNavigation.onCompleted.addListener(async (details) => {
+	// Only handle main frame navigations
+	if (details.frameId !== 0) return;
+
+	// Skip internal pages
+	const url = details.url;
+	if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) return;
+
+	// Check if auto-open notes is enabled (default: true)
+	const { settings = {} } = await chrome.storage.sync.get('settings');
+	if (settings.autoOpenNotes === false) return;
+
+	// Find the quick link that matches this page's URL
+	const keyword = await findQuickLinkKeywordForUrl(url);
+	if (!keyword) return;
+
+	// Check if there is a saved note for this quick link
+	const noteKey = `note_${keyword}`;
+	const noteResult = await chrome.storage.sync.get(noteKey);
+	if (!noteResult[noteKey]) return;
+
+	// Store keyword in session and open popup to show the notes view
+	await chrome.storage.session.set({ openNotesForKeyword: keyword });
+	chrome.action.openPopup();
 });
