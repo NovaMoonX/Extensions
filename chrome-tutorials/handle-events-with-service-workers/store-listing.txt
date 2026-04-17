@@ -19,7 +19,7 @@ Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Open 
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering finds what you need — and fuzzy keyword matching surfaces links even when you only remember part of the keyword.
 
 📝 Notes for Every Link
-Attach personal notes to any quick link. Open a link's detail view and tap Notes to write or review your thoughts. Notes support a full edit/view mode with scrollable text. If you don't have a quick link for the current page yet, the Notes shortcut will guide you to create one first. When you land on a page that has notes, the notes panel opens automatically — you can turn this off in Settings.
+Attach personal notes to any quick link — stored separately so they never clutter your links list. Open a link's detail view and tap Notes to write or review your thoughts. Notes support a full edit/view mode with scrollable text. If you don't have a quick link for the current page yet, the Notes shortcut will guide you to create one first. When you land on a page that has notes, the notes panel opens automatically — you can turn this off in Settings.
 
 🔗 Quick Link Detail View
 Click any quick link card to open its detail view: keyword, description, URL, and one-tap access to Notes or Edit. Clean, focused, and no clutter.
