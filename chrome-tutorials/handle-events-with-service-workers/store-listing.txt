@@ -13,12 +13,18 @@ Type "ql" in your address bar, add a keyword, and press Enter. That's it. Your m
 Visit a site frequently? We'll suggest creating a quick link automatically, with a keyword and description drawn from the page's tab name — not just the URL. Accept, edit, or block — you're in control. Toggle auto-suggestions on or off in Settings at any time.
 
 ⌨️ Keyboard Shortcuts
-Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Never touch your mouse.
+Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Open notes for the current page: Option+Shift+M (Mac) or Ctrl+Shift+M (Windows/Linux). Never touch your mouse.
 
 🔍 Search Your Links
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering finds what you need — and fuzzy keyword matching surfaces links even when you only remember part of the keyword.
 
-🚫 Manage Blocked Suggestions
+📝 Notes for Every Link
+Attach personal notes to any quick link — stored separately so they never clutter your links list. Open a link's detail view and tap Notes to write or review your thoughts. Notes support a full edit/view mode with scrollable text. If you don't have a quick link for the current page yet, the Notes shortcut will guide you to create one first. When you land on a page that has notes, the notes panel opens automatically — you can turn this off in Settings.
+
+🔗 Quick Link Detail View
+Click any quick link card to open its detail view: keyword, description, URL, and one-tap access to Notes or Edit. Clean, focused, and no clutter.
+
+
 Sites you've dismissed are tracked in a dedicated Blocked Suggestions view — searchable and easy to unblock whenever you change your mind.
 
 🔒 Private & Secure
@@ -34,6 +40,12 @@ No more bookmark folders. No more typing full URLs. Just instant access to every
 ---
 
 Version History
+
+1.9
+- Notes for quick links — attach personal notes to any saved link, with edit and view modes
+- Quick Link detail view — click any card in your list to see its full details, plus one-tap access to Notes and Edit
+- Auto-open notes — the notes panel opens automatically when you land on a page with saved notes (can be turned off in Settings)
+- New keyboard shortcut: Option+Shift+M (Mac) / Ctrl+Shift+M (Windows/Linux) to open notes for the current page
 
 1.8
 - Copy URL button on each quick link card — instantly copies the link's URL to your clipboard
