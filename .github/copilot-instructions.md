@@ -27,3 +27,15 @@ A Chrome Web Store listing description is maintained at:
 | `popup.js` | Popup logic — view switching, storage reads/writes |
 | `popup.css` | Popup styles including dark-mode support |
 | `store-listing.txt` | Chrome Web Store listing description **(keep in sync)** |
+
+### Storage Key Conventions
+
+Quick links are stored in `chrome.storage.sync` using the keyword itself as the key (e.g., `"github"`, `"docs"`). All other (non-keyword) keys **must** begin with two underscores (`__`) to prevent collisions with user-defined keywords. Examples:
+
+| Key | Purpose |
+|-----|---------|
+| `__settings` | User preferences object |
+| `__blockedSuggestions` | Array of URLs the user has blocked from auto-suggestions |
+| `__note_<keyword>` | Note text attached to a specific quick link |
+
+**Never** introduce a new non-keyword sync storage key without the `__` prefix. Keywords that begin with `_` are rejected at save time so users cannot accidentally overwrite internal state.

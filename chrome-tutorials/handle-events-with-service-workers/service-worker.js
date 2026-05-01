@@ -8,6 +8,53 @@ import {
 
 const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
 const SUGGESTIONS_PROMPT_EXISTS = 'Type to select a quick link or enter a new URL to create one.';
+
+// Migrate legacy non-keyword storage keys to the __ prefix convention so that
+// user-defined keywords can never accidentally overwrite internal app state.
+// Safe to run multiple times: if the new key already exists it is preserved
+// (not overwritten), and the old key is always removed after migration.
+async function migrateStorageKeys() {
+	const allData = await chrome.storage.sync.get(null);
+	const keysToSet = {};
+	const keysToRemove = [];
+
+	// blockedSuggestions → __blockedSuggestions
+	if ('blockedSuggestions' in allData) {
+		if (!('__blockedSuggestions' in allData)) {
+			keysToSet['__blockedSuggestions'] = allData['blockedSuggestions'];
+		}
+		keysToRemove.push('blockedSuggestions');
+	}
+
+	// settings → __settings
+	if ('settings' in allData) {
+		if (!('__settings' in allData)) {
+			keysToSet['__settings'] = allData['settings'];
+		}
+		keysToRemove.push('settings');
+	}
+
+	// note_<keyword> → __note_<keyword>
+	for (const key of Object.keys(allData)) {
+		if (key.startsWith('note_')) {
+			const newKey = `__${key}`;
+			if (!(newKey in allData)) {
+				keysToSet[newKey] = allData[key];
+			}
+			keysToRemove.push(key);
+		}
+	}
+
+	if (Object.keys(keysToSet).length > 0) {
+		await chrome.storage.sync.set(keysToSet);
+	}
+	if (keysToRemove.length > 0) {
+		await chrome.storage.sync.remove(keysToRemove);
+	}
+}
+
+chrome.runtime.onInstalled.addListener(migrateStorageKeys);
+chrome.runtime.onStartup.addListener(migrateStorageKeys);
 const SUGGESTIONS_PROMPT_NONE =
 	'No quick links yet. Enter a URL to create a new one or non-URL to simply search Google.';
 
@@ -122,7 +169,7 @@ chrome.omnibox.onInputChanged.addListener(async (input, suggest) => {
 
 	// Get all suggestions from storage
 	const allItems = await chrome.storage.sync.get(null);
-	const suggestionKeys = Object.keys(allItems);
+	const suggestionKeys = Object.keys(allItems).filter((k) => !k.startsWith('__'));
 
 	const formatSuggestions = (items) => {
 		return items.map((item) => ({
@@ -400,13 +447,13 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
 		console.log(`Frequent visits detected for: ${urlWithoutParams}`);
 
 		// Check if auto-suggestions are enabled in user settings (default: enabled)
-		const { settings = {} } = await chrome.storage.sync.get('settings');
+		const { __settings: settings = {} } = await chrome.storage.sync.get('__settings');
 		if (settings.autoSuggestionsEnabled === false) {
 			return;
 		}
 
 		// Check if URL is blocked from suggestions
-		const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+		const { __blockedSuggestions: blockedSuggestions = [] } = await chrome.storage.sync.get('__blockedSuggestions');
 		if (blockedSuggestions.includes(urlWithoutParams)) {
 			// User blocked suggestions for this URL
 			return;
@@ -589,7 +636,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 	if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) return;
 
 	// Check if auto-open notes is enabled (default: true)
-	const { settings = {} } = await chrome.storage.sync.get('settings');
+	const { __settings: settings = {} } = await chrome.storage.sync.get('__settings');
 	if (settings.autoOpenNotes === false) return;
 
 	// Find the quick link that matches this page's URL
@@ -597,7 +644,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 	if (!keyword) return;
 
 	// Check if there is a saved note for this quick link
-	const noteKey = `note_${keyword}`;
+	const noteKey = `__note_${keyword}`;
 	const noteResult = await chrome.storage.sync.get(noteKey);
 	if (!noteResult[noteKey]) return;
 
