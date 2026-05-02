@@ -87,6 +87,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     return result && result[keyword];
   }
 
+  // Returns a validation error string if the keyword is invalid, or null if valid.
+  async function getKeywordError(keyword, currentEditingKeyword) {
+    if (keyword.startsWith('_')) {
+      return 'Keywords cannot begin with an underscore — that prefix is reserved for internal use.';
+    }
+    if (keyword && keyword !== currentEditingKeyword) {
+      const exists = await checkKeywordExists(keyword);
+      if (exists) return 'A quick link with this keyword already exists.';
+    }
+    return null;
+  }
+
   // Real-time validation for keyword input
   keywordInput.addEventListener('input', async (e) => {
     const keyword = e.target.value
@@ -108,14 +120,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function updateKeywordWarning(keyword) {
     const trimmedKeyword = keyword.trim().toLowerCase();
-    
-    if (trimmedKeyword && trimmedKeyword !== editingKeyword) {
-      const exists = await checkKeywordExists(trimmedKeyword);
-      if (exists) {
-        keywordWarning.classList.remove('hidden');
-      } else {
-        keywordWarning.classList.add('hidden');
-      }
+    const error = trimmedKeyword ? await getKeywordError(trimmedKeyword, editingKeyword) : null;
+    if (error) {
+      keywordWarning.textContent = error;
+      keywordWarning.classList.remove('hidden');
     } else {
       keywordWarning.classList.add('hidden');
     }
@@ -267,7 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       notesKeywordLabel.textContent = keyword;
 
-      const noteKey = `note_${keyword}`;
+      const noteKey = `__note_${keyword}`;
       const result = await chrome.storage.sync.get(noteKey);
       const noteText = result[noteKey] || '';
       originalNoteText = noteText;
@@ -290,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function updateBlockedCount() {
-    const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+    const { __blockedSuggestions: blockedSuggestions = [] } = await chrome.storage.sync.get('__blockedSuggestions');
     const count = blockedSuggestions.length;
     if (count > 0) {
       viewBlockedBtn.textContent = `Blocked (${count})`;
@@ -301,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadBlockedUrls(searchTerm = '') {
-    const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+    const { __blockedSuggestions: blockedSuggestions = [] } = await chrome.storage.sync.get('__blockedSuggestions');
 
     const filtered = searchTerm
       ? blockedSuggestions.filter(url => url.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -331,26 +339,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function handleUnblock(e) {
     const url = e.target.dataset.url;
-    const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+    const { __blockedSuggestions: blockedSuggestions = [] } = await chrome.storage.sync.get('__blockedSuggestions');
     
     const updatedBlocked = blockedSuggestions.filter(blockedUrl => blockedUrl !== url);
-    await chrome.storage.sync.set({ blockedSuggestions: updatedBlocked });
+    await chrome.storage.sync.set({ __blockedSuggestions: updatedBlocked });
 
     // Reload the blocked URLs list with current search term
     loadBlockedUrls(blockedSearchInput.value);
   }
 
   async function loadSettings() {
-    const { settings = {} } = await chrome.storage.sync.get('settings');
+    const { __settings: settings = {} } = await chrome.storage.sync.get('__settings');
     autoSuggestionsToggle.checked = settings.autoSuggestionsEnabled !== false;
     autoOpenNotesToggle.checked = settings.autoOpenNotes !== false;
   }
 
   async function saveSettings() {
-    const { settings = {} } = await chrome.storage.sync.get('settings');
+    const { __settings: settings = {} } = await chrome.storage.sync.get('__settings');
     settings.autoSuggestionsEnabled = autoSuggestionsToggle.checked;
     settings.autoOpenNotes = autoOpenNotesToggle.checked;
-    await chrome.storage.sync.set({ settings });
+    await chrome.storage.sync.set({ __settings: settings });
   }
 
   // Returns true if every character in searchTerm appears in keyword in order (subsequence match)
@@ -367,11 +375,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const suggestionsMap = await chrome.storage.sync.get(null);
     let suggestionKeys = Object.keys(suggestionsMap);
 
-    // Filter out non-suggestion keys
+    // Filter out non-suggestion keys (internal keys use the __ prefix)
     suggestionKeys = suggestionKeys.filter(key => 
-      key !== 'blockedSuggestions' && 
-      key !== 'settings' &&
-      !key.startsWith('note_') &&
+      !key.startsWith('__') &&
       suggestionsMap[key] && 
       typeof suggestionsMap[key] === 'object' && 
       !Array.isArray(suggestionsMap[key])
@@ -554,7 +560,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   saveNoteBtn.addEventListener('click', async () => {
     const noteText = noteTextarea.value.trim();
-    const noteKey = `note_${currentNoteKeyword}`;
+    const noteKey = `__note_${currentNoteKeyword}`;
 
     if (noteText) {
       await chrome.storage.sync.set({ [noteKey]: noteText });
@@ -649,6 +655,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!keyword || !url) {
       showMessage('Keyword and URL are required', 'error');
+      return;
+    }
+
+    const keywordError = await getKeywordError(keyword, editingKeyword);
+    if (keywordError) {
+      showMessage(keywordError, 'error');
       return;
     }
 
@@ -801,12 +813,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       // Get current blocked list
-      const { blockedSuggestions = [] } = await chrome.storage.sync.get('blockedSuggestions');
+      const { __blockedSuggestions: blockedSuggestions = [] } = await chrome.storage.sync.get('__blockedSuggestions');
       
       // Add URL to blocked list if not already there
       if (!blockedSuggestions.includes(suggestedData.url)) {
         blockedSuggestions.push(suggestedData.url);
-        await chrome.storage.sync.set({ blockedSuggestions });
+        await chrome.storage.sync.set({ __blockedSuggestions: blockedSuggestions });
       }
 
       // Clear suggestion from session storage
