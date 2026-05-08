@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getBlockedSuggestions, saveBlockedSuggestions } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
 

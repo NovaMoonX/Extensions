@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { saveLilyPad, deleteLilyPad, getLilyPad, keywordExists } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';

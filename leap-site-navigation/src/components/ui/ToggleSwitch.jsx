@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ToggleSwitch({ checked, onChange }) {
   return (
     <label className="toggle-switch">

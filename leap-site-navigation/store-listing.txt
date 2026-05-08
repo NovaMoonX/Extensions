@@ -1,4 +1,4 @@
-Leap — Instant Navigation, Leaflets & Productivity
+Leap — Instant Site Navigation, Notes & More
 
 Stop swimming through bookmarks. Start leaping.
 
@@ -18,7 +18,7 @@ Drop a Leaflet on any Lily Pad. Pin passwords, snippets, or reminders that appea
 Visit a site frequently? We'll suggest adding a Lily Pad automatically, with a keyword and description drawn from the page's tab name. Accept, edit, or block — you're in control. Toggle auto-suggestions on or off in Settings at any time.
 
 ⌨️ Keyboard Shortcuts
-Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Open Leaflets for the current page: Option+Shift+M (Mac) or Ctrl+Shift+M (Windows/Linux). Never touch your mouse.
+Save the current page instantly: Option+L (Mac) or Ctrl+L (Windows/Linux). Open Leaflets for the current page: Option+Shift+L (Mac) or Ctrl+Shift+L (Windows/Linux). Never touch your mouse.
 
 🔍 Scan the Pond
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering finds what you need — fuzzy keyword matching surfaces Lily Pads even when you only remember part of the keyword.

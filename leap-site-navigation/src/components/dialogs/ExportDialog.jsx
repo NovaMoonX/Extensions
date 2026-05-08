@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { exportData } from '../../utils/exportImport.js';
 
 export default function ExportDialog({ onClose }) {
@@ -25,7 +25,7 @@ export default function ExportDialog({ onClose }) {
           <h3>Export Data</h3>
           <button className="dialog-close-btn" onClick={onClose}>✕</button>
         </div>
-        <p className="dialog-hint">Copy or download your Lily Pads and Leaflets as JSON.</p>
+        <p className="dialog-hint">Copy or download your Lily Pads, Leaflets, and More as JSON.</p>
         <textarea className="export-textarea" readOnly value={json} />
         <div className="dialog-actions">
           <button className="save" onClick={handleDownload}>⬇ Download .json</button>

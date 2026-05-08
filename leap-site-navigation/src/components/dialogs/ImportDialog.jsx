@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { importData } from '../../utils/exportImport.js';
 
 export default function ImportDialog({ onClose }) {
