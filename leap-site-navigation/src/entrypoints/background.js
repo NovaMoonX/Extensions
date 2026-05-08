@@ -9,6 +9,7 @@ import {
 
 export default defineBackground(() => {
 	const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
+	const OMNIBOX_KEYWORD = 'lp';
 	const SUGGESTIONS_PROMPT_EXISTS = 'Type to select a lily pad or enter a new URL to create one.';
 	const SUGGESTIONS_PROMPT_NONE =
 		'No lily pads yet. Enter a URL to create a new one or non-URL to simply search Google.';
@@ -368,7 +369,7 @@ export default defineBackground(() => {
 				hostname === '127.0.0.1' ||
 				hostname === '::1' ||
 				hostname === '0.0.0.0' ||
-				hostname === 'lp'
+				hostname === OMNIBOX_KEYWORD
 			) {
 				return;
 			}
@@ -504,7 +505,7 @@ export default defineBackground(() => {
 			const navUrl = new URL(details.url);
 
 			// Case 1: Direct navigation to http://lp/<keyword>
-			if (navUrl.hostname === 'lp') {
+			if (navUrl.hostname === OMNIBOX_KEYWORD) {
 				const path = navUrl.pathname.replace(/^\/+/, '').trim();
 				if (path) keyword = path;
 			}

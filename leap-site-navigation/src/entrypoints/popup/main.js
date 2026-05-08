@@ -809,10 +809,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Export functionality ---
 
+  const EXPORT_FORMAT_VERSION = 2;
+
   async function exportData() {
     const allData = await chrome.storage.sync.get(null);
     const exportObj = {
-      version: 2,
+      version: EXPORT_FORMAT_VERSION,
       exportedAt: new Date().toISOString(),
       lilyPads: {},
       leaflets: {},
