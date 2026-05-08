@@ -19,6 +19,7 @@
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "wxt": "^0.20.25"
   }
 }

@@ -68,14 +68,18 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
       }
     }
     initForm();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingKeyword, prefillData, pendingUrl, pendingTitle]);
+  }, [editingKeyword, prefillData, pendingUrl, pendingTitle, descRef, keywordRef]);
 
   async function validateKeyword(kw, editing) {
     const trimmed = kw.trim().toLowerCase();
     if (!trimmed) { setKeywordWarning(''); return; }
     const err = await getKeywordError(trimmed, editing ?? editingKeyword);
     setKeywordWarning(err || '');
+  }
+
+  function handleUrlChange(e) {
+    setUrl(e.target.value);
+    setOriginalUrlWithParams(null);
   }
 
   function handleStripToggle(checked) {
@@ -146,7 +150,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         <div className="form-group">
           <label htmlFor="url">URL</label>
           <input id="url" type="text" required value={url}
-            onChange={(e) => { setUrl(e.target.value); setOriginalUrlWithParams(null); }} />
+            onChange={handleUrlChange} />
           {!isEdit && (
             <div className="toggle-group">
               <input type="checkbox" id="stripQueryParamsToggle" checked={stripParams}

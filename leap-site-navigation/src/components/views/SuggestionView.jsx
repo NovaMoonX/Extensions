@@ -29,6 +29,11 @@ export default function SuggestionView({ data, onCreated, onEdit, onCancel }) {
     window.close();
   }
 
+  async function handleEdit() {
+    await chrome.storage.session.remove('suggestedGoLink');
+    onEdit(data);
+  }
+
   return (
     <div id="suggestionView">
       <h2 id="suggestionTitle">Add to your Pond?</h2>
@@ -51,7 +56,7 @@ export default function SuggestionView({ data, onCreated, onEdit, onCancel }) {
 
       <div className="button-group">
         <button className="create" onClick={handleCreate} disabled={saving}>Create</button>
-        <button className="edit" onClick={() => { chrome.storage.session.remove('suggestedGoLink'); onEdit(data); }}>Edit</button>
+        <button className="edit" onClick={handleEdit}>Edit</button>
         <button className="cancel" onClick={onCancel}>Cancel</button>
       </div>
       <button className="block-suggestion" onClick={handleBlock}>Don't suggest this again</button>

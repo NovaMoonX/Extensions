@@ -85,7 +85,7 @@ export default function App() {
           keyword={viewData?.keyword}
           onBack={() => navigate('list')}
           onEdit={(keyword) => navigate('form', { keyword })}
-          onLeaflets={(keyword) => navigate('leaflets', { keyword, fromDetail: true })}
+          onViewLeaflets={(keyword) => navigate('leaflets', { keyword, fromDetail: true })}
         />
       )}
       {view === 'leaflets' && (

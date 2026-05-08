@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getLilyPad } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
 
-export default function DetailView({ keyword, onBack, onEdit, onLeaflets }) {
+export default function DetailView({ keyword, onBack, onEdit, onViewLeaflets }) {
   const [pad, setPad] = useState(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function DetailView({ keyword, onBack, onEdit, onLeaflets }) {
         </div>
       </div>
       <div className="detail-actions">
-        <button className="detail-notes-btn" onClick={() => onLeaflets(keyword)}>🍃 Leaflets</button>
+        <button className="detail-notes-btn" onClick={() => onViewLeaflets(keyword)}>🍃 Leaflets</button>
         <button className="detail-edit-btn" onClick={() => onEdit(keyword)}>✏️ Edit</button>
       </div>
     </div>
