@@ -13,7 +13,11 @@
     "zip:firefox": "wxt zip --browser firefox",
     "postinstall": "wxt prepare"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@wxt-dev/module-react": "^1.2.2",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
   "devDependencies": {
     "wxt": "^0.20.25"
   }
