@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Returns a validation error string if the keyword is invalid, or null if valid.
   async function getKeywordError(keyword, currentEditingKeyword) {
-    if (keyword.startsWith('_')) {
-      return 'Keywords cannot begin with an underscore — that prefix is reserved for internal use.';
+    if (keyword.startsWith('__')) {
+      return "Keywords cannot begin with '__' — that prefix is reserved for internal use.";
     }
     if (keyword && keyword !== currentEditingKeyword) {
       const exists = await checkKeywordExists(keyword);

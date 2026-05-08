@@ -875,7 +875,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (parsed.lilyPads && typeof parsed.lilyPads === 'object') {
       for (const [keyword, value] of Object.entries(parsed.lilyPads)) {
-        if (keyword.startsWith('__')) continue;
+        // Skip reserved or malformed keywords
+        if (!keyword || keyword.startsWith('__') || typeof keyword !== 'string') continue;
+        if (!value || typeof value !== 'object' || !value.url) continue;
         if (!overwrite) {
           const existing = await chrome.storage.sync.get(keyword);
           if (existing[keyword]) continue;
@@ -886,7 +888,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (parsed.leaflets && typeof parsed.leaflets === 'object') {
       for (const [keyword, noteText] of Object.entries(parsed.leaflets)) {
-        if (keyword.startsWith('__')) continue;
+        // Skip reserved or malformed keywords
+        if (!keyword || keyword.startsWith('__') || typeof keyword !== 'string') continue;
+        if (typeof noteText !== 'string') continue;
         const noteKey = `__note_${keyword}`;
         if (!overwrite) {
           const existing = await chrome.storage.sync.get(noteKey);

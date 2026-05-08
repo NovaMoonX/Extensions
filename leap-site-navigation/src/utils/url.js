@@ -24,6 +24,18 @@ export function normalizeURL(input) {
 	return `https://${input}`;
 }
 
+// Normalize a URL for comparison: strip query params and trailing slashes.
+// Used to detect duplicate URLs regardless of minor formatting differences.
+export function normalizeForUrlComparison(rawUrl) {
+	if (!rawUrl || typeof rawUrl !== 'string') return null;
+	try {
+		const u = new URL(rawUrl);
+		return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+	} catch {
+		return rawUrl.replace(/\/+$/, '');
+	}
+}
+
 // Remove query parameters from URL
 export function stripQueryParams(urlString) {
 	try {

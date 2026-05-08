@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: 'Leap',
     description: 'Leap — Instant Navigation, Leaflets & Productivity',
-    version: '2.0',
+    version: '2.0.0',
     permissions: ['storage', 'webNavigation', 'tabs'],
     host_permissions: ['<all_urls>'],
     omnibox: { keyword: 'lp' },

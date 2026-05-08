@@ -5,6 +5,7 @@ import {
 	stripQueryParams,
 	hasFrequentVisits,
 	extractSuggestionFieldsFromTitle,
+	normalizeForUrlComparison,
 } from '../utils/url.js';
 
 export default defineBackground(() => {
@@ -110,35 +111,25 @@ export default defineBackground(() => {
 
 	// Returns true if any saved lily pad already points to the given URL.
 	async function urlHasExistingLink(url) {
-		const normalizeForComparison = (rawUrl) => {
-			if (!rawUrl || typeof rawUrl !== 'string') return null;
-			return stripQueryParams(rawUrl).replace(/\/+$/, '');
-		};
-
-		const target = normalizeForComparison(url);
+		const target = normalizeForUrlComparison(url);
 		if (!target) return false;
 
 		const allLinks = await chrome.storage.sync.get(null);
 		return Object.values(allLinks).some((item) => {
 			if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
-			return normalizeForComparison(item.url) === target;
+			return normalizeForUrlComparison(item.url) === target;
 		});
 	}
 
 	// Returns the keyword of the first saved lily pad that matches the given URL, or null.
 	async function findLilyPadKeywordForUrl(url) {
-		const normalizeForComparison = (rawUrl) => {
-			if (!rawUrl || typeof rawUrl !== 'string') return null;
-			return stripQueryParams(rawUrl).replace(/\/+$/, '');
-		};
-
-		const target = normalizeForComparison(url);
+		const target = normalizeForUrlComparison(url);
 		if (!target) return null;
 
 		const allLinks = await chrome.storage.sync.get(null);
 		for (const [key, item] of Object.entries(allLinks)) {
 			if (!item || typeof item !== 'object' || Array.isArray(item) || !item.url) continue;
-			if (normalizeForComparison(item.url) === target) return key;
+			if (normalizeForUrlComparison(item.url) === target) return key;
 		}
 		return null;
 	}
@@ -439,15 +430,7 @@ export default defineBackground(() => {
 			return;
 		}
 
-		const normalizeForCompare = (url) => {
-			try {
-				const u = new URL(url);
-				return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
-			} catch {
-				return url;
-			}
-		};
-		if (normalizeForCompare(stripQueryParams(details.url)) !== normalizeForCompare(pending.url)) {
+		if (normalizeForUrlComparison(stripQueryParams(details.url)) !== normalizeForUrlComparison(pending.url)) {
 			return;
 		}
 
