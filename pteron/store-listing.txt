@@ -11,8 +11,8 @@ What You Get:
 ⚡ The p/ Trigger
 The fastest way to move. Type p/ + your keyword in the address bar to go anywhere instantly. Zero friction, maximum speed.
 
-📝 Contextual Notes
-Attach notes to any saved link. They appear the moment you land on the site, keeping your info ready when you need it. Toggle auto-open in Settings.
+📝 Contextual Notes — Now with Rich Text
+Attach notes to any saved link. Format them with bold, italic, underline, strikethrough, bullet lists, numbered lists, and clickable links. Your notes appear the moment you land on a site, and links inside them are easy to copy. Toggle auto-open in Settings.
 
 🎯 Smart Suggestions
 Visit a site frequently? Pteron suggests saving it automatically, with a keyword drawn from the page title. Accept, edit, or block — you're in control.
@@ -37,6 +37,12 @@ Give your browser wings.
 ---
 
 Version History
+
+1.1
+- Rich text notes: bold, italic, underline, strikethrough, bullet lists, numbered lists, and links
+- Copy URL button on link cards replaced with a compact icon (copy → checkmark on click)
+- Removed redundant Edit button from link cards — click any card to view details and edit from there
+- Replaced emoji icons throughout with a consistent icon set
 
 1.0
 - Pteron launch

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getLinks, getBlockedSuggestions } from '../../utils/storage.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
+import { Copy, Check, Settings } from '../ui/Icons.jsx';
 
 function fuzzyMatch(keyword, searchTerm) {
   let searchIdx = 0;
@@ -82,13 +83,15 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
                   {keyword}
                 </a>
                 <div className="suggestion-actions">
-                  <button className="edit-btn" data-keyword={keyword}
-                    onClick={(e) => { e.stopPropagation(); onEditItem(keyword); }}>
-                    Edit
-                  </button>
-                  <button className="copy-btn" data-keyword={keyword}
-                    onClick={(e) => handleCopy(e, pad.url)}>
-                    {copiedKeyword === keyword ? 'Copied!' : 'Copy URL'}
+                  <button
+                    className="copy-icon-btn"
+                    data-keyword={keyword}
+                    title="Copy URL"
+                    onClick={(e) => handleCopy(e, pad.url)}
+                  >
+                    {copiedKeyword === keyword
+                      ? <Check size={14} strokeWidth={2.5} />
+                      : <Copy size={14} strokeWidth={2} />}
                   </button>
                 </div>
               </div>
@@ -103,7 +106,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
         {blockedCount > 0 && (
           <button className="footer-btn" onClick={onViewBlocked}>Blocked ({blockedCount})</button>
         )}
-        <button className="footer-btn" onClick={onSettings}>⚙ Settings</button>
+        <button className="footer-btn" onClick={onSettings}><Settings size={13} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 4 }} />Settings</button>
       </div>
 
       <ShortcutHint />

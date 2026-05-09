@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { saveLink, deleteLink, getLink, keywordExists } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
+import { FileText } from '../ui/Icons.jsx';
 
 async function getKeywordError(keyword, editingKeyword) {
   if (keyword.startsWith('__')) {
@@ -186,8 +187,8 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
       </form>
 
       {isEdit && editingKeyword && (
-        <button type="button" className="form-notes-btn" onClick={() => onViewNotes(editingKeyword)}>
-          📝 View / Edit Notes
+      <button type="button" className="form-notes-btn" onClick={() => onViewNotes(editingKeyword)}>
+          <FileText size={14} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 6 }} />View / Edit Notes
         </button>
       )}
 
