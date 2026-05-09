@@ -5,8 +5,10 @@ import ViewHeader from '../ui/ViewHeader.jsx';
 export default function TagManagerView({ onBack }) {
   const [tags, setTags] = useState([]);
   const [newLabel, setNewLabel] = useState('');
+  const [createError, setCreateError] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingLabel, setEditingLabel] = useState('');
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     getTags().then(setTags);
@@ -15,8 +17,12 @@ export default function TagManagerView({ onBack }) {
   async function handleCreate(e) {
     e.preventDefault();
     const label = newLabel.trim();
-    if (!label) return;
-    if (tags.some((t) => t.label.toLowerCase() === label.toLowerCase())) return;
+    if (!label) { setCreateError('Tag name cannot be empty.'); return; }
+    if (tags.some((t) => t.label.toLowerCase() === label.toLowerCase())) {
+      setCreateError('A tag with this name already exists.');
+      return;
+    }
+    setCreateError('');
     const newTag = { id: crypto.randomUUID(), label };
     const updated = [...tags, newTag];
     await saveTags(updated);
@@ -40,10 +46,12 @@ export default function TagManagerView({ onBack }) {
 
   async function handleRename(id) {
     const label = editingLabel.trim();
-    if (!label) {
-      setEditingId(null);
+    if (!label) { setEditError('Tag name cannot be empty.'); return; }
+    if (tags.some((t) => t.id !== id && t.label.toLowerCase() === label.toLowerCase())) {
+      setEditError('A tag with this name already exists.');
       return;
     }
+    setEditError('');
     const updated = tags.map((t) => (t.id === id ? { ...t, label } : t));
     await saveTags(updated);
     setTags(updated);
@@ -54,6 +62,7 @@ export default function TagManagerView({ onBack }) {
   function startEdit(tag) {
     setEditingId(tag.id);
     setEditingLabel(tag.label);
+    setEditError('');
   }
 
   return (
@@ -65,11 +74,12 @@ export default function TagManagerView({ onBack }) {
           type="text"
           placeholder="New tag name…"
           value={newLabel}
-          onChange={(e) => setNewLabel(e.target.value)}
+          onChange={(e) => { setNewLabel(e.target.value); setCreateError(''); }}
           className="tag-create-input"
         />
         <button type="submit" className="tag-create-btn">Add</button>
       </form>
+      {createError && <div className="keyword-warning" style={{ marginBottom: 10 }}>{createError}</div>}
 
       {tags.length === 0 ? (
         <div className="empty-state" style={{ paddingTop: 24 }}>No tags yet. Create one above.</div>
@@ -82,15 +92,20 @@ export default function TagManagerView({ onBack }) {
                   onSubmit={(e) => { e.preventDefault(); handleRename(tag.id); }}
                   className="tag-edit-form"
                 >
-                  <input
-                    autoFocus
-                    type="text"
-                    value={editingLabel}
-                    onChange={(e) => setEditingLabel(e.target.value)}
-                    className="tag-edit-input"
-                  />
-                  <button type="submit" className="tag-save-btn">Save</button>
-                  <button type="button" className="tag-cancel-edit-btn" onClick={() => setEditingId(null)}>✕</button>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={editingLabel}
+                        onChange={(e) => { setEditingLabel(e.target.value); setEditError(''); }}
+                        className="tag-edit-input"
+                      />
+                      <button type="submit" className="tag-save-btn">Save</button>
+                      <button type="button" className="tag-cancel-edit-btn" onClick={() => { setEditingId(null); setEditError(''); }}>✕</button>
+                    </div>
+                    {editError && <div className="keyword-warning">{editError}</div>}
+                  </div>
                 </form>
               ) : (
                 <>
