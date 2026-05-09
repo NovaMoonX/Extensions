@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { saveLilyPad, deleteLilyPad, getLilyPad, keywordExists } from '../../utils/storage.js';
+import { saveLink, deleteLink, getLink, keywordExists } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
 
@@ -30,7 +30,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   useEffect(() => {
     async function initForm() {
       if (editingKeyword) {
-        const pad = await getLilyPad(editingKeyword);
+        const pad = await getLink(editingKeyword);
         if (pad) {
           setUrl(pad.url);
           setKeyword(editingKeyword);
@@ -107,10 +107,10 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
 
     try {
       if (editingKeyword && editingKeyword !== kw) {
-        await deleteLilyPad(editingKeyword);
+        await deleteLink(editingKeyword);
       }
-      const existing = await getLilyPad(kw);
-      await saveLilyPad(kw, {
+      const existing = await getLink(kw);
+      await saveLink(kw, {
         url: u,
         description: desc || kw,
         timesUsed: existing?.timesUsed || 0,
@@ -127,7 +127,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   async function handleDelete() {
     if (!editingKeyword) return;
     if (!confirm(`Delete your link "${editingKeyword}"?`)) return;
-    await deleteLilyPad(editingKeyword);
+    await deleteLink(editingKeyword);
     onCancel();
   }
 

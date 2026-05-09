@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getLilyPads, getBlockedSuggestions } from '../../utils/storage.js';
+import { getLinks, getBlockedSuggestions } from '../../utils/storage.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
 
 function fuzzyMatch(keyword, searchTerm) {
@@ -17,7 +17,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   const [copiedKeyword, setCopiedKeyword] = useState(null);
 
   const reload = useCallback(async () => {
-    const [p, b] = await Promise.all([getLilyPads(), getBlockedSuggestions()]);
+    const [p, b] = await Promise.all([getLinks(), getBlockedSuggestions()]);
     setPads(p);
     setBlockedCount(b.length);
   }, []);

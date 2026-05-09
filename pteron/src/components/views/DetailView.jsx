@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { getLilyPad } from '../../utils/storage.js';
+import { getLink } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
 
 export default function DetailView({ keyword, onBack, onEdit, onViewLeaflets }) {
   const [pad, setPad] = useState(null);
 
   useEffect(() => {
-    if (keyword) getLilyPad(keyword).then(setPad);
+    if (keyword) getLink(keyword).then(setPad);
   }, [keyword]);
 
   if (!pad) return null;

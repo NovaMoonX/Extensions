@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { saveLilyPad, getBlockedSuggestions, saveBlockedSuggestions } from '../../utils/storage.js';
+import { saveLink, getBlockedSuggestions, saveBlockedSuggestions } from '../../utils/storage.js';
 
 export default function SuggestionView({ data, onCreated, onEdit, onCancel }) {
   const [saving, setSaving] = useState(false);
@@ -7,7 +7,7 @@ export default function SuggestionView({ data, onCreated, onEdit, onCancel }) {
   async function handleCreate() {
     setSaving(true);
     try {
-      await saveLilyPad(data.keyword, {
+      await saveLink(data.keyword, {
         url: data.url,
         description: data.description,
         timesUsed: 0,

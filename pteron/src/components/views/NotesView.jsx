@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeaflet, saveLeaflet } from '../../utils/storage.js';
+import { getNote, saveNote } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
 
 export default function NotesView({ keyword, fromDetail, onBack, onCreateLink }) {
@@ -10,7 +10,7 @@ export default function NotesView({ keyword, fromDetail, onBack, onCreateLink })
 
   useEffect(() => {
     if (keyword) {
-      getLeaflet(keyword).then(text => {
+      getNote(keyword).then(text => {
         setNoteText(text);
         setEditMode(!text); // auto-enter edit if no existing note
         setDraftText(text);
@@ -21,7 +21,7 @@ export default function NotesView({ keyword, fromDetail, onBack, onCreateLink })
 
   async function handleSave() {
     const text = draftText.trim();
-    await saveLeaflet(keyword, text);
+    await saveNote(keyword, text);
     setNoteText(text);
     setEditMode(false);
   }

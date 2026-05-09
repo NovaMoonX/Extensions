@@ -34,11 +34,11 @@ export function usePopupInit() {
         setInitialData({ keyword: openDetailForKeyword });
       } else if (openNotesForKeyword) {
         await chrome.storage.session.remove('openNotesForKeyword');
-        setInitialView('leaflets');
+        setInitialView('notes');
         setInitialData({ keyword: openNotesForKeyword, fromDetail: false });
       } else if (openNotesForCurrentPage) {
         await chrome.storage.session.remove('openNotesForCurrentPage');
-        setInitialView('leaflets');
+        setInitialView('notes');
         setInitialData({ keyword: null, fromDetail: false });
       } else if (pendingUrl) {
         setInitialView('form');

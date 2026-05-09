@@ -5,17 +5,17 @@ export async function exportData() {
   const exportObj = {
     version: EXPORT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
-    lilyPads: {},
-    leaflets: {},
+    links: {},
+    notes: {},
     blockedSuggestions: allData['__blockedSuggestions'] || [],
     settings: allData['__settings'] || {},
   };
 
   for (const [key, value] of Object.entries(allData)) {
     if (key.startsWith('__note_')) {
-      exportObj.leaflets[key.slice('__note_'.length)] = value;
+      exportObj.notes[key.slice('__note_'.length)] = value;
     } else if (!key.startsWith('__') && value?.url) {
-      exportObj.lilyPads[key] = value;
+      exportObj.links[key] = value;
     }
   }
 
@@ -32,8 +32,12 @@ export async function importData(jsonText, overwrite) {
 
   const toSet = {};
 
-  if (parsed.lilyPads && typeof parsed.lilyPads === 'object') {
-    for (const [keyword, value] of Object.entries(parsed.lilyPads)) {
+  // Support both new key names (links/notes) and legacy names (lilyPads/leaflets)
+  const linksData = parsed.links || parsed.lilyPads;
+  const notesData = parsed.notes || parsed.leaflets;
+
+  if (linksData && typeof linksData === 'object') {
+    for (const [keyword, value] of Object.entries(linksData)) {
       if (!keyword || keyword.startsWith('__') || typeof keyword !== 'string') continue;
       if (!value || typeof value !== 'object' || !value.url) continue;
       if (!overwrite) {
@@ -44,8 +48,8 @@ export async function importData(jsonText, overwrite) {
     }
   }
 
-  if (parsed.leaflets && typeof parsed.leaflets === 'object') {
-    for (const [keyword, noteText] of Object.entries(parsed.leaflets)) {
+  if (notesData && typeof notesData === 'object') {
+    for (const [keyword, noteText] of Object.entries(notesData)) {
       if (!keyword || keyword.startsWith('__') || typeof keyword !== 'string') continue;
       if (typeof noteText !== 'string') continue;
       const noteKey = `__note_${keyword}`;
