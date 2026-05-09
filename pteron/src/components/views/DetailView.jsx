@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getLink } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
+import { FileText, Pencil } from '../ui/Icons.jsx';
 
 export default function DetailView({ keyword, onBack, onEdit, onViewNotes }) {
   const [pad, setPad] = useState(null);
@@ -29,8 +30,12 @@ export default function DetailView({ keyword, onBack, onEdit, onViewNotes }) {
         </div>
       </div>
       <div className="detail-actions">
-        <button className="detail-notes-btn" onClick={() => onViewNotes(keyword)}>📝 Notes</button>
-        <button className="detail-edit-btn" onClick={() => onEdit(keyword)}>✏️ Edit</button>
+        <button className="detail-notes-btn" onClick={() => onViewNotes(keyword)}>
+          <FileText size={15} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 6 }} />Notes
+        </button>
+        <button className="detail-edit-btn" onClick={() => onEdit(keyword)}>
+          <Pencil size={15} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 6 }} />Edit
+        </button>
       </div>
     </div>
   );

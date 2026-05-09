@@ -640,6 +640,28 @@ kbd {
   background-color: #d1d5db;
 }
 
+.copy-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #64748B;
+  cursor: pointer;
+  flex-grow: 0;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.copy-icon-btn:hover {
+  background-color: #e5e7eb;
+  color: #0F172A;
+}
+
 .delete-link {
   width: 100%;
   padding: 7px 12px;
@@ -1336,7 +1358,196 @@ kbd {
     color: #64748B;
   }
 
-  .overwrite-toggle label {
+/* === Rich Text Toolbar (Notes) === */
+.rich-text-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #64748B;
+  cursor: pointer;
+  flex-grow: 0;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
+}
+
+.toolbar-btn.is-active {
+  background-color: #2563EB;
+  color: white;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: #E2E8F0;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* === Link input bar (Notes) === */
+.link-input-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.link-input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.link-apply-btn {
+  padding: 5px 10px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-grow: 0;
+  width: auto;
+}
+
+.link-apply-btn:hover {
+  background-color: #1D4ED8;
+}
+
+/* === Notes editor wrapper === */
+.notes-editor-wrapper {
+  min-height: 120px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  border-radius: 12px;
+}
+
+.notes-editor-wrapper .notes-editor {
+  min-height: 120px;
+}
+
+.notes-editor .tiptap {
+  min-height: 120px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #0F172A;
+  line-height: 1.5;
+  outline: none;
+  background-color: #fff;
+  word-break: break-word;
+}
+
+.notes-editor .tiptap:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 4px rgba(37, 99, 235, 0.3);
+}
+
+.notes-editor-readonly .notes-editor .tiptap {
+  border: 1px solid #e0e0e0;
+  background-color: #F1F5F9;
+  cursor: default;
+}
+
+.notes-editor .tiptap p { margin: 0 0 4px 0; }
+.notes-editor .tiptap p:last-child { margin-bottom: 0; }
+.notes-editor .tiptap ul,
+.notes-editor .tiptap ol { padding-left: 20px; margin: 4px 0; }
+.notes-editor .tiptap li { margin: 2px 0; }
+.notes-editor .tiptap a {
+  color: #2563EB;
+  text-decoration: underline;
+}
+.notes-editor .tiptap a:hover {
+  color: #1D4ED8;
+}
+
+/* dark mode toolbar and editor */
+@media (prefers-color-scheme: dark) {
+  .rich-text-toolbar {
+    background-color: #1E293B;
+    border-color: #273549;
+  }
+
+  .toolbar-btn {
+    color: #94A3B8;
+  }
+
+  .toolbar-btn:hover {
+    background-color: #273549;
+    color: #e0e0e0;
+  }
+
+  .toolbar-btn.is-active {
+    background-color: #2563EB;
+    color: white;
+  }
+
+  .toolbar-divider {
+    background-color: #273549;
+  }
+
+  .link-input {
+    background-color: #1E293B;
+    border-color: #273549;
+    color: #e0e0e0;
+  }
+
+  .notes-editor .tiptap {
+    background-color: #1E293B;
+    border-color: #1E293B;
+    color: #e0e0e0;
+  }
+
+  .notes-editor .tiptap:focus {
+    border-color: #93C5FD;
+    box-shadow: 0 0 4px rgba(147, 197, 253, 0.5);
+  }
+
+  .notes-editor-readonly .notes-editor .tiptap {
+    background-color: #1E293B;
+    border-color: #1E293B;
+  }
+
+  .notes-editor .tiptap a {
+    color: #93C5FD;
+  }
+
+  .copy-icon-btn {
     color: #64748B;
+  }
+
+  .copy-icon-btn:hover {
+    background-color: #273549;
+    color: #e0e0e0;
   }
 }

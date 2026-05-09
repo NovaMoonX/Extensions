@@ -14,7 +14,13 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@tiptap/extension-link": "^3.23.1",
+    "@tiptap/extension-underline": "^3.23.1",
+    "@tiptap/pm": "^3.23.1",
+    "@tiptap/react": "^3.23.1",
+    "@tiptap/starter-kit": "^3.23.1",
     "@wxt-dev/module-react": "^1.2.2",
+    "lucide-react": "^1.14.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
