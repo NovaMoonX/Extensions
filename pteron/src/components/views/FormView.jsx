@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { saveLink, deleteLink, getLink, keywordExists, getTags, saveTags } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
+import {
+  detectAIEnvironment,
+  createChromeAISession,
+  extractPageText,
+  generateKeywordAndDescription,
+  generateTagSuggestions,
+} from '../../utils/ai.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
 import { FileText, Trash2, Plus } from '../ui/Icons.jsx';
 
@@ -28,6 +35,15 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   const [newTagLabel, setNewTagLabel] = useState('');
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [newTagError, setNewTagError] = useState('');
+
+  // AI state -----------------------------------------------------------
+  // aiPhase: 'idle' | 'initializing' | 'stage2' | 'stage3' | 'done' | 'unavailable'
+  const [aiPhase, setAiPhase] = useState('idle');
+  const [modelProgress, setModelProgress] = useState(0);
+  const aiSessionRef = useRef(null);
+  const pageTitleRef = useRef('');
+  // --------------------------------------------------------------------
+
   const descRef = useRef(null);
   const keywordRef = useRef(null);
   const newTagRef = useRef(null);
@@ -37,6 +53,105 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   useEffect(() => {
     getTags().then(setAvailableTags);
   }, []);
+
+  // Kick off AI enhancement for new links (not edits, not prefill from suggestion)
+  useEffect(() => {
+    if (isEdit || prefillData) return;
+
+    let cancelled = false;
+
+    async function runAI() {
+      const env = await detectAIEnvironment();
+
+      if (env.type === 'none') {
+        setAiPhase('unavailable');
+        return;
+      }
+
+      if (env.type === 'webllm' && env.status === 'not-installed') {
+        setAiPhase('unavailable');
+        return;
+      }
+
+      if (env.type === 'chrome') {
+        try {
+          setAiPhase('initializing');
+          setModelProgress(0);
+
+          const session = await createChromeAISession(
+            'You are a helpful assistant that generates concise, accurate bookmark metadata.',
+            (ratio) => {
+              if (!cancelled) setModelProgress(ratio);
+            },
+          );
+          if (cancelled) { session.destroy(); return; }
+
+          aiSessionRef.current = session;
+
+          // Stage 2: refine keyword + description
+          setAiPhase('stage2');
+          const pageText = await extractPageText();
+          if (cancelled) return;
+
+          const title = pageTitleRef.current;
+          const { keyword: aiKeyword, description: aiDesc } =
+            await generateKeywordAndDescription(session, title, pageText);
+          if (cancelled) return;
+
+          setKeyword((prev) => aiKeyword || prev);
+          setDescription((prev) => aiDesc || prev);
+          if (aiKeyword) validateKeyword(aiKeyword, null);
+
+          // Stage 3: suggest tags
+          setAiPhase('stage3');
+          const tags = await getTags();
+          if (cancelled) return;
+
+          const tagResult = await generateTagSuggestions(session, title, pageText, tags);
+          if (cancelled) return;
+
+          // Apply matched existing tags
+          const matchedIds = tags
+            .filter((t) => tagResult.matched.includes(t.label))
+            .map((t) => t.id);
+
+          // Create and apply suggested new tags
+          const newTags = [...tags];
+          const newIds = [...matchedIds];
+          for (const label of tagResult.suggested) {
+            if (!newTags.some((t) => t.label.toLowerCase() === label.toLowerCase())) {
+              const newTag = { id: crypto.randomUUID(), label };
+              newTags.push(newTag);
+              newIds.push(newTag.id);
+            } else {
+              const existing = newTags.find((t) => t.label.toLowerCase() === label.toLowerCase());
+              if (existing && !newIds.includes(existing.id)) newIds.push(existing.id);
+            }
+          }
+
+          if (newTags.length > tags.length) {
+            await saveTags(newTags);
+            setAvailableTags(newTags);
+          }
+
+          setSelectedTagIds(newIds);
+          setAiPhase('done');
+        } catch {
+          if (!cancelled) setAiPhase('unavailable');
+        }
+      }
+    }
+
+    runAI();
+
+    return () => {
+      cancelled = true;
+      if (aiSessionRef.current) {
+        try { aiSessionRef.current.destroy(); } catch { /* ignore */ }
+        aiSessionRef.current = null;
+      }
+    };
+  }, [isEdit, prefillData]);
 
   useEffect(() => {
     async function initForm() {
@@ -57,6 +172,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         setTimeout(() => keywordRef.current?.focus(), 0);
       } else if (pendingUrl) {
         const { url: u, keyword: k, description: d, originalUrl } = extractSuggestionFieldsFromTitle(pendingTitle || '', pendingUrl);
+        pageTitleRef.current = pendingTitle || '';
         setOriginalUrlWithParams(originalUrl || pendingUrl);
         setUrl(originalUrl || pendingUrl);
         setKeyword(k);
@@ -68,6 +184,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         try {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
           if (tabs[0]?.url) {
+            pageTitleRef.current = tabs[0].title || '';
             const { url: u, keyword: k, description: d, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title || '', tabs[0].url);
             setOriginalUrlWithParams(originalUrl || tabs[0].url);
             setUrl(originalUrl || tabs[0].url);
@@ -190,6 +307,19 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         )}
       </div>
 
+      {/* AI model initialisation banner */}
+      {aiPhase === 'initializing' && (
+        <div className="ai-init-banner">
+          <span className="ai-init-label">🪶 Initializing Wings…</span>
+          <div className="ai-init-progress">
+            <div
+              className="ai-init-fill"
+              style={{ width: `${Math.round(modelProgress * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {message.text && (
         <div className={`message ${message.type}`}>{message.text}</div>
       )}
@@ -208,8 +338,12 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="keyword">Keyword</label>
+        {/* Stage 2: keyword + description — pulsing while AI is working */}
+        <div className={`form-group${aiPhase === 'stage2' ? ' ai-field--thinking' : ''}`}>
+          <label htmlFor="keyword">
+            Keyword
+            {aiPhase === 'stage2' && <span className="ai-thinking-dots" aria-label="AI thinking" />}
+          </label>
           <input id="keyword" ref={keywordRef} type="text" required placeholder="e.g., myapp"
             value={keyword}
             onChange={(e) => { setKeyword(e.target.value); validateKeyword(e.target.value, editingKeyword); }} />
@@ -218,15 +352,22 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="description">Description <span style={{ color: '#999' }}>(optional)</span></label>
+        <div className={`form-group${aiPhase === 'stage2' ? ' ai-field--thinking' : ''}`}>
+          <label htmlFor="description">
+            Description <span style={{ color: '#999' }}>(optional)</span>
+            {aiPhase === 'stage2' && <span className="ai-thinking-dots" aria-label="AI thinking" />}
+          </label>
           <input id="description" ref={descRef} type="text" placeholder="e.g., Open My App"
             value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
-        <div className="form-group">
+        {/* Stage 3: tags — thinking state while AI suggests */}
+        <div className={`form-group${aiPhase === 'stage3' ? ' ai-field--thinking' : ''}`}>
           <div className="tag-section-header">
-            <label style={{ margin: 0 }}>Tags</label>
+            <label style={{ margin: 0 }}>
+              Tags
+              {aiPhase === 'stage3' && <span className="ai-thinking-dots" aria-label="AI thinking" />}
+            </label>
             <button
               type="button"
               className="tag-add-inline-btn"

@@ -3,10 +3,11 @@ export default function ShortcutHint() {
   const modKey = isMac ? 'Option' : 'Ctrl';
   const primaryShortcut = `${modKey}+L`;
   const secondaryShortcut = isMac ? 'Option+Shift+L' : 'Ctrl+Shift+L';
+  const listShortcut = isMac ? 'Option+P' : 'Alt+Shift+P';
 
   return (
     <div className="shortcut-hint">
-      Tip: Press <kbd>{primaryShortcut}</kbd> to quickly save or open current page · <kbd>{secondaryShortcut}</kbd> for Notes
+      Tip: Press <kbd>{primaryShortcut}</kbd> to save · <kbd>{secondaryShortcut}</kbd> for Notes · <kbd>{listShortcut}</kbd> to open list
     </div>
   );
 }

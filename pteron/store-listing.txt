@@ -18,7 +18,7 @@ Attach notes to any saved link. Format them with bold, italic, underline, strike
 Visit a site frequently? Pteron suggests saving it automatically, with a keyword drawn from the page title. Accept, edit, or block — you're in control.
 
 ⌨️ Keyboard Shortcuts
-Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac).
+Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac). Open your saved links list directly: Alt+Shift+P (Windows/Linux) or Alt+P (Mac).
 
 🔍 Instant Search
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast.
@@ -26,6 +26,9 @@ Can't remember the keyword? Search by URL, keyword, or description. Real-time fi
 🏷️ Tag-Based Organisation
 Assign one or more tags to any link and filter your collection in an instant. Create and rename tags in Settings → Tag Manager. Click any tag chip above the link list to narrow down results — combine multiple tags for precise filtering.
 Tag chips in the main list now collapse based on total label length, so the "+ more" count is more consistent regardless of short or long tag names.
+
+🤖 AI Pilot (Chrome 126+)
+When saving a new link on Chrome 126+, Pteron's built-in AI (Gemini Nano) automatically refines your keyword and description using the page's actual content, then suggests the most relevant tags from your collection — or creates new ones. The three-stage process (title → keyword/description → tags) shows a gentle pulse animation so you always know what's happening. On first use, a "Initializing Wings…" progress bar appears while the on-device model loads — no data ever leaves your device.
 
 📤 Export & Import
 Take your links with you. Export all your saved links and notes as a JSON file. Import from another device — choose whether to overwrite existing data or only fill in gaps.
@@ -41,6 +44,12 @@ Give your browser wings.
 ---
 
 Version History
+
+1.4
+- AI Pilot: on Chrome 126+ Pteron automatically refines keyword, description and tags for new links using on-device Gemini Nano — no data sent to external servers
+- Progressive three-stage UI: title appears instantly, keyword/description and tags update with pulse animations as the AI works
+- "Initializing Wings…" progress bar shown the first time the AI model is downloaded
+- New keyboard shortcut: Alt+P (Mac) / Alt+Shift+P (Windows/Linux) opens your saved links list directly
 
 1.3
 - Improved tag filter collapsing: the "+ more" threshold now uses total tag label characters instead of a fixed number of chips

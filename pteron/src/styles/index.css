@@ -1012,6 +1012,91 @@ kbd {
   gap: 8px;
 }
 
+/* === AI Pilot === */
+
+/* Pulsing opacity animation used while AI is generating */
+@keyframes ai-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* Banner shown while the model is downloading */
+.ai-init-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #1D4ED8;
+}
+
+.ai-init-label {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ai-init-progress {
+  height: 4px;
+  background-color: #BFDBFE;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ai-init-fill {
+  height: 100%;
+  background-color: #2563EB;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 6px;
+}
+
+/* Form-group wrapper that pulses while AI is working on its fields */
+.ai-field--thinking {
+  animation: ai-pulse 1.4s ease-in-out infinite;
+}
+
+/* Animated "..." dots appended to a label during AI generation */
+.ai-thinking-dots {
+  display: inline-block;
+  margin-left: 5px;
+  color: #2563EB;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.ai-thinking-dots::after {
+  content: '...';
+  animation: ai-dots 1.2s steps(3, end) infinite;
+}
+
+@keyframes ai-dots {
+  0%   { content: '.'; }
+  33%  { content: '..'; }
+  66%  { content: '...'; }
+  100% { content: ''; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-init-banner {
+    background-color: #1e2d4a;
+    border-color: #1D4ED8;
+    color: #93C5FD;
+  }
+
+  .ai-init-progress {
+    background-color: #1D4ED8;
+  }
+
+  .ai-thinking-dots {
+    color: #93C5FD;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #0B0E14;
