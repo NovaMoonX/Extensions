@@ -14,6 +14,7 @@ export function usePopupInit() {
         'openNotesForKeyword',
         'openNotesForCurrentPage',
         'openDetailForKeyword',
+        'openListView',
       ]);
 
       const {
@@ -23,9 +24,14 @@ export function usePopupInit() {
         openNotesForKeyword,
         openNotesForCurrentPage,
         openDetailForKeyword,
+        openListView,
       } = sessionData;
 
-      if (suggestedGoLink) {
+      if (openListView) {
+        await chrome.storage.session.remove('openListView');
+        setInitialView('list');
+        setInitialData(null);
+      } else if (suggestedGoLink) {
         setInitialView('suggestion');
         setInitialData(suggestedGoLink);
       } else if (openDetailForKeyword) {

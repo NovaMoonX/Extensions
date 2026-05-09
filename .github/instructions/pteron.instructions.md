@@ -74,6 +74,14 @@ All storage access goes through `src/utils/storage.js`.
 - Keywords: monospace font
 - Card hover: `box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1)`
 
+## TypeScript Conventions
+
+- **Use TypeScript (`.ts` / `.tsx`) for all new files** — utilities, hooks, and components.
+- Existing `.js` / `.jsx` files are being migrated incrementally; do not revert migrated files back to JS.
+- Strict mode is enabled (`"strict": true` in `.wxt/tsconfig.json`) — no `any` without justification.
+- Prefer explicit return types on exported functions and hooks.
+- Chrome extension globals (`chrome.*`) are provided by WXT's bundled types — no `@types/chrome` import needed.
+
 ## React Conventions
 
 - All storage calls go through `src/utils/storage.js`

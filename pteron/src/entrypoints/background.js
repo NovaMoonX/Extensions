@@ -336,10 +336,11 @@ export default defineBackground(() => {
 				await chrome.storage.session.set({ openNotesForCurrentPage: true });
 			}
 			chrome.action.openPopup();
+		} else if (command === 'open-list') {
+			await chrome.storage.session.set({ openListView: true });
+			chrome.action.openPopup();
 		}
 	});
-
-	// --- Web Navigation: visit tracking and auto-suggestions ---
 
 	chrome.webNavigation.onCommitted.addListener(async (details) => {
 		const { tabId, url, transitionType, transitionQualifiers } = details;
@@ -541,6 +542,7 @@ export default defineBackground(() => {
 					'openNotesForKeyword',
 					'openNotesForCurrentPage',
 					'openDetailForKeyword',
+					'openListView',
 				]);
 			});
 		}

@@ -18,4 +18,5 @@ export {
   Plus,
   ChevronDown,
   ChevronUp,
+  X,
 } from 'lucide-react';

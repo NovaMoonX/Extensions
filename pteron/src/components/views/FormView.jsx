@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { saveLink, deleteLink, getLink, keywordExists, getTags, saveTags } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
-import ShortcutHint from '../ui/ShortcutHint.jsx';
-import { FileText, Trash2, Plus } from '../ui/Icons.jsx';
+import { useAIEnhancement } from '../../hooks/useAIEnhancement';
+import { FileText, Trash2, Plus, Check, X } from '../ui/Icons.jsx';
 
 async function getKeywordError(keyword, editingKeyword) {
   if (keyword.startsWith('__')) {
@@ -15,24 +15,65 @@ async function getKeywordError(keyword, editingKeyword) {
   return null;
 }
 
-export default function FormView({ editingKeyword, prefillData, pendingUrl, pendingTitle, onSaved, onCancel, onViewNotes, onViewAll }) {
+export default function FormView({ editingKeyword, prefillData, pendingUrl, pendingTitle, onSaved, onCancel, onViewNotes, onViewAll, onViewShortcuts }) {
   const [url, setUrl] = useState('');
   const [keyword, setKeyword] = useState('');
   const [description, setDescription] = useState('');
+  const [aiFilledKeyword, setAiFilledKeyword] = useState(false);
+  const [aiFilledDescription, setAiFilledDescription] = useState(false);
   const [stripParams, setStripParams] = useState(false);
   const [keywordWarning, setKeywordWarning] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [originalUrlWithParams, setOriginalUrlWithParams] = useState(null);
   const [availableTags, setAvailableTags] = useState([]);
+  const [aiSelectedTagIds, setAiSelectedTagIds] = useState([]);
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [newTagLabel, setNewTagLabel] = useState('');
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [newTagError, setNewTagError] = useState('');
+
   const descRef = useRef(null);
   const keywordRef = useRef(null);
   const newTagRef = useRef(null);
 
   const isEdit = !!editingKeyword;
+
+  // AI enhancement — keyword and description are auto-filled; tags use chip approval
+  const { aiPhase, modelProgress, pendingSuggestions, dismissKeyword, dismissDescription, dismissTag } =
+    useAIEnhancement(!isEdit && !prefillData, availableTags, pendingTitle || undefined);
+
+  // Auto-apply AI keyword suggestion directly into the field
+  useEffect(() => {
+    if (pendingSuggestions.keyword) {
+      setKeyword(pendingSuggestions.keyword);
+      setAiFilledKeyword(true);
+      validateKeyword(pendingSuggestions.keyword, editingKeyword);
+      dismissKeyword();
+    }
+  }, [pendingSuggestions.keyword]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-apply AI description suggestion directly into the field
+  useEffect(() => {
+    if (pendingSuggestions.description) {
+      setDescription(pendingSuggestions.description);
+      setAiFilledDescription(true);
+      dismissDescription();
+    }
+  }, [pendingSuggestions.description]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-select matched (existing) tags immediately — no chip needed
+  useEffect(() => {
+    if (!pendingSuggestions.tags) return;
+    console.debug('[Pteron AI] FormView pendingSuggestions.tags received:', pendingSuggestions.tags);
+    const matched = pendingSuggestions.tags.filter((s) => !s.isNew);
+    const newOnly = pendingSuggestions.tags.filter((s) => s.isNew);
+    console.debug('[Pteron AI] FormView — auto-selecting matched tags:', matched.map((s) => s.label), '| showing as chips (new):', newOnly.map((s) => s.label));
+    if (matched.length === 0) return;
+    const ids = matched.map((s) => s.existingId).filter(Boolean);
+    setSelectedTagIds((prev) => Array.from(new Set([...prev, ...ids])));
+    setAiSelectedTagIds((prev) => Array.from(new Set([...prev, ...ids])));
+    matched.forEach((s) => dismissTag(s.tempId));
+  }, [pendingSuggestions.tags]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     getTags().then(setAvailableTags);
@@ -154,9 +195,10 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   async function handleCreateTag(e) {
     e?.preventDefault?.();
     e?.stopPropagation?.();
-    const label = newTagLabel.trim();
+    // Sanitize: lowercase, no spaces, no special characters
+    const label = newTagLabel.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     if (!label) { setNewTagError('Tag name cannot be empty.'); return; }
-    if (availableTags.some((t) => t.label.toLowerCase() === label.toLowerCase())) {
+    if (availableTags.some((t) => t.label.toLowerCase() === label)) {
       setNewTagError('A tag with this name already exists.');
       return;
     }
@@ -179,6 +221,22 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
     }
   }
 
+  async function handleAcceptAITag(suggestion) {
+    if (suggestion.isNew) {
+      // Create the new tag in storage before selecting it
+      const newTag = { id: crypto.randomUUID(), label: suggestion.label };
+      const updated = [...availableTags, newTag];
+      await saveTags(updated);
+      setAvailableTags(updated);
+      setSelectedTagIds((prev) => [...prev, newTag.id]);
+    } else {
+      setSelectedTagIds((prev) =>
+        prev.includes(suggestion.existingId) ? prev : [...prev, suggestion.existingId]
+      );
+    }
+    dismissTag(suggestion.tempId);
+  }
+
   return (
     <div id="formView">
       <div className="form-title-row">
@@ -189,6 +247,19 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           </button>
         )}
       </div>
+
+      {/* AI model initialization banner — shown while engine loads from cache */}
+      {aiPhase === 'initializing' && (
+        <div className="ai-init-banner">
+          <span className="ai-init-label">🪶 Initializing Wings…</span>
+          <div className="ai-init-progress">
+            <div
+              className="ai-init-fill"
+              style={{ width: `${Math.round(modelProgress * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {message.text && (
         <div className={`message ${message.type}`}>{message.text}</div>
@@ -208,25 +279,71 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="keyword">Keyword</label>
-          <input id="keyword" ref={keywordRef} type="text" required placeholder="e.g., myapp"
-            value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); validateKeyword(e.target.value, editingKeyword); }} />
+        {/* Stage 2: keyword + description — pulsing while AI is working */}
+        <div className={`form-group${aiPhase === 'stage2' ? ' ai-field--thinking' : ''}`}>
+          <label htmlFor="keyword">
+            Keyword
+            {aiPhase === 'stage2' && <span className="ai-thinking-dots" aria-label="AI thinking" />}
+          </label>
+          <div className="ai-field-wrapper">
+            <input id="keyword" ref={keywordRef} type="text" required placeholder="e.g., myapp"
+              value={keyword}
+              disabled={aiPhase === 'initializing' || aiPhase === 'stage2'}
+              className={aiFilledKeyword ? 'ai-filled' : ''}
+              onChange={(e) => { setKeyword(e.target.value); setAiFilledKeyword(false); validateKeyword(e.target.value, editingKeyword); }} />
+            {aiFilledKeyword && (
+              <div className="ai-field-badge">
+                <span className="ai-field-badge-emoji">🪶</span>
+                <button
+                  type="button"
+                  className="ai-field-clear"
+                  title="Clear AI suggestion"
+                  onClick={() => { setKeyword(''); setAiFilledKeyword(false); validateKeyword('', editingKeyword); }}
+                >
+                  <X size={10} strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+          </div>
           {keywordWarning && (
             <div className="keyword-warning">{keywordWarning}</div>
           )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="description">Description <span style={{ color: '#999' }}>(optional)</span></label>
-          <input id="description" ref={descRef} type="text" placeholder="e.g., Open My App"
-            value={description} onChange={(e) => setDescription(e.target.value)} />
+        <div className={`form-group${aiPhase === 'stage2' ? ' ai-field--thinking' : ''}`}>
+          <label htmlFor="description">
+            Description <span style={{ color: '#999' }}>(optional)</span>
+            {aiPhase === 'stage2' && <span className="ai-thinking-dots" aria-label="AI thinking" />}
+          </label>
+          <div className="ai-field-wrapper ai-field-wrapper--textarea">
+            <textarea id="description" ref={descRef} rows={2} placeholder="e.g., Open My App"
+              value={description}
+              disabled={aiPhase === 'initializing' || aiPhase === 'stage2'}
+              className={aiFilledDescription ? 'ai-filled' : ''}
+              onChange={(e) => { setDescription(e.target.value); setAiFilledDescription(false); }} />
+            {aiFilledDescription && (
+              <div className="ai-field-badge">
+                <span className="ai-field-badge-emoji">🪶</span>
+                <button
+                  type="button"
+                  className="ai-field-clear"
+                  title="Clear AI suggestion"
+                  onClick={() => { setDescription(''); setAiFilledDescription(false); }}
+                >
+                  <X size={10} strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="form-group">
+        {/* Stage 3: tags — thinking state while AI suggests */}
+        <div className={`form-group${aiPhase === 'stage3' ? ' ai-field--thinking' : ''}`}>
           <div className="tag-section-header">
-            <label style={{ margin: 0 }}>Tags</label>
+            <label style={{ margin: 0 }}>
+              Tags
+              {aiPhase === 'stage3' && <span className="ai-thinking-dots" aria-label="AI thinking" />}
+            </label>
             <button
               type="button"
               className="tag-add-inline-btn"
@@ -238,6 +355,39 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
             </button>
           </div>
 
+          {/* AI tag suggestions — user approves or dismisses each one */}
+          {pendingSuggestions.tags && pendingSuggestions.tags.length > 0 && (
+            <div className="ai-tag-suggestions">
+              <span className="ai-suggestion-label">🪶 AI suggests:</span>
+              <div className="ai-tag-suggestion-chips">
+                {pendingSuggestions.tags.map((s) => (
+                  <span key={s.tempId} className="ai-tag-suggestion-chip">
+                    <span className="ai-tag-suggestion-label">
+                      {s.isNew && <span className="ai-tag-new-badge">new</span>}
+                      {s.label}
+                    </span>
+                    <button
+                      type="button"
+                      className="ai-tag-accept-btn"
+                      title={`Add tag "${s.label}"`}
+                      onClick={() => handleAcceptAITag(s)}
+                    >
+                      <Check size={11} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      className="ai-tag-dismiss-btn"
+                      title="Dismiss"
+                      onClick={() => dismissTag(s.tempId)}
+                    >
+                      <X size={11} strokeWidth={2.5} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {showNewTagInput && (
             <div className="tag-inline-create-form" role="group" aria-label="Create new tag">
               <input
@@ -245,7 +395,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
                 type="text"
                 placeholder="Tag name…"
                 value={newTagLabel}
-                onChange={(e) => { setNewTagLabel(e.target.value); setNewTagError(''); }}
+                onChange={(e) => { setNewTagLabel(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '')); setNewTagError(''); }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleCreateTag(e);
@@ -268,14 +418,16 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
                     key={tag.id}
                     type="button"
                     className={`tag-chip${active ? ' tag-chip--active' : ''}`}
-                    onClick={() =>
-                      setSelectedTagIds(
-                        active
-                          ? selectedTagIds.filter((id) => id !== tag.id)
-                          : [...selectedTagIds, tag.id]
-                      )
-                    }
+                    onClick={() => {
+                      if (active) {
+                        setSelectedTagIds(selectedTagIds.filter((id) => id !== tag.id));
+                        setAiSelectedTagIds((prev) => prev.filter((id) => id !== tag.id));
+                      } else {
+                        setSelectedTagIds([...selectedTagIds, tag.id]);
+                      }
+                    }}
                   >
+                    {aiSelectedTagIds.includes(tag.id) && <span style={{ marginRight: 3 }}>🪶</span>}
                     {tag.label}
                   </button>
                 );
@@ -301,7 +453,11 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
       )}
 
       <button className="view-all" onClick={onViewAll}>View All Links</button>
-      <ShortcutHint />
+      <div className="shortcut-hint">
+        <button type="button" className="shortcut-link-btn" onClick={onViewShortcuts}>
+          View keyboard shortcuts
+        </button>
+      </div>
     </div>
   );
 }

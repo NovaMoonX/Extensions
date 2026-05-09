@@ -6,8 +6,8 @@ export default defineConfig({
   manifest: {
     name: 'Pteron: Shortcut your browser',
     description: 'Turns your address bar into a command center. Save links, navigate with p/keyword, attach notes, and sync across devices.',
-    version: '1.0.0',
-    permissions: ['storage', 'webNavigation', 'tabs'],
+    version: '1.4.0',
+    permissions: ['storage', 'webNavigation', 'tabs', 'scripting'],
     host_permissions: ['<all_urls>'],
     omnibox: { keyword: 'p' },
     icons: {
@@ -32,6 +32,10 @@ export default defineConfig({
       'open-notes': {
         suggested_key: { default: 'Ctrl+Shift+L', mac: 'Alt+Shift+L' },
         description: 'Open Notes for current page'
+      },
+      'open-list': {
+        suggested_key: { default: 'Alt+Shift+P', mac: 'Alt+P' },
+        description: 'Open Pteron in list view'
       }
     }
   },
