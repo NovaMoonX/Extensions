@@ -131,6 +131,20 @@
 						<span class="toggle-slider"></span>
 					</label>
 				</div>
+				<div class="setting-item setting-item--action">
+					<div class="setting-info">
+						<div class="setting-label">Export Data</div>
+						<div class="setting-description">Export all quick links and notes to a JSON file</div>
+					</div>
+					<button id="exportBtn" class="action-btn">Export</button>
+				</div>
+				<div class="setting-item setting-item--action">
+					<div class="setting-info">
+						<div class="setting-label">Import Data</div>
+						<div class="setting-description">Import quick links and notes from a JSON file</div>
+					</div>
+					<button id="importBtn" class="action-btn">Import</button>
+				</div>
 			</div>
 		</div>
 
@@ -194,6 +208,44 @@
 						<button id="saveNoteBtn" class="save">Save</button>
 						<button id="cancelNoteEditBtn" class="cancel">Cancel</button>
 					</div>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- Export overlay -->
+		<div id="exportOverlay" class="overlay hidden">
+			<div class="overlay-box">
+				<div class="overlay-header">
+					<h3>Export Data</h3>
+					<button id="closeExportBtn" class="close-btn">✕</button>
+				</div>
+				<p class="overlay-hint">Copy or download your quick links and notes as JSON.</p>
+				<textarea id="exportTextarea" class="export-textarea" readonly></textarea>
+				<div class="button-group">
+					<button id="downloadExportBtn" class="save">⬇ Download .json</button>
+					<button id="closeExportBtn2" class="cancel">Close</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Import overlay -->
+		<div id="importOverlay" class="overlay hidden">
+			<div class="overlay-box">
+				<div class="overlay-header">
+					<h3>Import Data</h3>
+					<button id="closeImportBtn" class="close-btn">✕</button>
+				</div>
+				<p class="overlay-hint">Select a Quick Links or Pteron JSON file to import.</p>
+				<input type="file" id="importFileInput" accept=".json,application/json" class="import-file-input" />
+				<div class="import-overwrite-toggle">
+					<input type="checkbox" id="overwriteToggle" />
+					<label for="overwriteToggle">Overwrite existing links and notes</label>
+				</div>
+				<div id="importMessage" class="message"></div>
+				<div class="button-group">
+					<button id="doImportBtn" class="save">Import</button>
+					<button id="closeImportBtn2" class="cancel">Cancel</button>
 				</div>
 			</div>
 		</div>
