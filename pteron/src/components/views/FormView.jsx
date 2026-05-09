@@ -152,7 +152,8 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   }
 
   async function handleCreateTag(e) {
-    e.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     const label = newTagLabel.trim();
     if (!label) { setNewTagError('Tag name cannot be empty.'); return; }
     if (availableTags.some((t) => t.label.toLowerCase() === label.toLowerCase())) {
@@ -238,18 +239,23 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           </div>
 
           {showNewTagInput && (
-            <form onSubmit={handleCreateTag} className="tag-inline-create-form">
+            <div className="tag-inline-create-form" role="group" aria-label="Create new tag">
               <input
                 ref={newTagRef}
                 type="text"
                 placeholder="Tag name…"
                 value={newTagLabel}
                 onChange={(e) => { setNewTagLabel(e.target.value); setNewTagError(''); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateTag(e);
+                  }
+                }}
                 className="tag-inline-create-input"
               />
-              <button type="submit" className="tag-save-btn">Add</button>
+              <button type="button" className="tag-save-btn" onClick={handleCreateTag}>Add</button>
               <button type="button" className="tag-cancel-edit-btn" onClick={() => { setShowNewTagInput(false); setNewTagError(''); }}>✕</button>
-            </form>
+            </div>
           )}
           {newTagError && <div className="keyword-warning" style={{ marginTop: 4 }}>{newTagError}</div>}
 

@@ -11,7 +11,7 @@ function fuzzyMatch(keyword, searchTerm) {
   return searchIdx === searchTerm.length;
 }
 
-const TAG_COLLAPSED_LIMIT = 5;
+const TAG_CHAR_LIMIT = 30;
 
 export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlocked, onSettings }) {
   const [pads, setPads] = useState({});
@@ -57,8 +57,21 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
     setTimeout(() => setCopiedKeyword(null), 1500);
   }
 
-  const visibleTags = tagsExpanded ? tags : tags.slice(0, TAG_COLLAPSED_LIMIT);
-  const hasMoreTags = tags.length > TAG_COLLAPSED_LIMIT;
+  const collapsedCount = (() => {
+    let chars = 0;
+    let count = 0;
+    for (const tag of tags) {
+      if (count === 0 || chars + tag.label.length <= TAG_CHAR_LIMIT) {
+        chars += tag.label.length;
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  })();
+  const visibleTags = tagsExpanded ? tags : tags.slice(0, collapsedCount);
+  const hasMoreTags = tags.length > collapsedCount;
 
   return (
     <div id="listView">
@@ -112,7 +125,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
               {tagsExpanded ? (
                 <><ChevronUp size={12} strokeWidth={2.5} style={{ verticalAlign: 'middle', marginRight: 3 }} />Show less</>
               ) : (
-                <><ChevronDown size={12} strokeWidth={2.5} style={{ verticalAlign: 'middle', marginRight: 3 }} />+{tags.length - TAG_COLLAPSED_LIMIT} more</>
+                <><ChevronDown size={12} strokeWidth={2.5} style={{ verticalAlign: 'middle', marginRight: 3 }} />+{tags.length - collapsedCount} more</>
               )}
             </button>
           )}
