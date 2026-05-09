@@ -75,17 +75,26 @@ export default defineBackground(() => {
 		return inputIndex === input.length ? firstMatchIndex : -1;
 	}
 
-	// Wraps each matched character in <match> tags for omnibox highlighting
+	// Escapes XML special characters for use in Chrome omnibox description strings,
+	// which are parsed as XML-like markup. Unescaped &, < or > cause Chrome to
+	// silently drop the affected suggestion from the dropdown.
+	function escapeXml(str) {
+		return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
+
+	// Wraps each matched character in <match> tags for omnibox highlighting,
+	// XML-escaping each character so the result is valid omnibox markup.
 	function fuzzyHighlightKeyword(keyword, inputLower) {
 		const keywordLower = keyword.toLowerCase();
 		let result = '';
 		let inputIndex = 0;
 		for (let keywordIndex = 0; keywordIndex < keyword.length; keywordIndex++) {
+			const safe = escapeXml(keyword[keywordIndex]);
 			if (inputIndex < inputLower.length && keywordLower[keywordIndex] === inputLower[inputIndex]) {
-				result += `<match>${keyword[keywordIndex]}</match>`;
+				result += `<match>${safe}</match>`;
 				inputIndex++;
 			} else {
-				result += keyword[keywordIndex];
+				result += safe;
 			}
 		}
 		return result;
@@ -161,8 +170,13 @@ export default defineBackground(() => {
 			items.map((item) => ({ content: item.content, description: item.description }));
 
 		const highlightMatches = (text) => {
-			const regex = new RegExp(`(${trimmedInput})`, 'gi');
-			return text.replace(regex, '<match>$1</match>');
+			// XML-escape the text first so the result is valid omnibox markup, then
+			// regex-escape the input before constructing the RegExp so that user-typed
+			// characters like +, *, (, etc. don't cause a SyntaxError.
+			const escapedText = escapeXml(text);
+			const safeInput = escapeXml(trimmedInput).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			const regex = new RegExp(`(${safeInput})`, 'gi');
+			return escapedText.replace(regex, '<match>$1</match>');
 		};
 
 		const filteredSuggestions = suggestionKeys
@@ -173,7 +187,7 @@ export default defineBackground(() => {
 				}
 
 				const description = item.description || '';
-				const escapedUrl = item.url.replace(/&/g, '&amp;');
+				const escapedUrl = escapeXml(item.url);
 				const urlDim = `<dim> • <url>${escapedUrl}</url></dim>`;
 
 				const keywordLower = keyword.toLowerCase();
@@ -193,14 +207,14 @@ export default defineBackground(() => {
 					highlightedDescription = highlightMatches(description);
 				} else if (description.toLowerCase().includes(inputLower)) {
 					matchScore = 25;
-					highlightedKeyword = keyword;
+					highlightedKeyword = escapeXml(keyword);
 					highlightedDescription = highlightMatches(description);
 				} else {
 					fuzzyMatchStart = fuzzyMatchKeyword(keywordLower, inputLower);
 					if (fuzzyMatchStart !== -1) {
 						matchScore = 10;
 						highlightedKeyword = fuzzyHighlightKeyword(keyword, inputLower);
-						highlightedDescription = description;
+						highlightedDescription = escapeXml(description);
 					}
 				}
 
@@ -236,7 +250,7 @@ export default defineBackground(() => {
 			const otherSuggestions = filteredSuggestions.filter(
 				(suggestion) => suggestion.content.toLowerCase() !== trimmedInput.toLowerCase(),
 			);
-			suggest(formatSuggestions(otherSuggestions));
+			suggest(formatSuggestions(otherSuggestions.slice(0, 5)));
 		} else if (filteredSuggestions.length === 0) {
 			await chrome.omnibox.setDefaultSuggestion({ description: SUGGESTIONS_PROMPT_NONE });
 			suggest([]);
@@ -250,7 +264,7 @@ export default defineBackground(() => {
 				},
 			});
 			const otherSuggestions = filteredSuggestions.slice(1);
-			suggest(formatSuggestions(otherSuggestions));
+			suggest(formatSuggestions(otherSuggestions.slice(0, 5)));
 		}
 	});
 

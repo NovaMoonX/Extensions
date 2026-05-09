@@ -30,6 +30,10 @@ export async function importData(jsonText, overwrite) {
     throw new Error('Invalid JSON file');
   }
 
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Invalid format: expected a JSON object');
+  }
+
   const toSet = {};
 
   // Support both new key names (links/notes) and legacy names (lilyPads/leaflets)
