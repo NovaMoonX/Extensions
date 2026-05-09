@@ -250,7 +250,7 @@ export default defineBackground(() => {
 			const otherSuggestions = filteredSuggestions.filter(
 				(suggestion) => suggestion.content.toLowerCase() !== trimmedInput.toLowerCase(),
 			);
-			suggest(formatSuggestions(otherSuggestions.slice(0, 5)));
+			suggest(formatSuggestions(otherSuggestions.slice(0, 10)));
 		} else if (filteredSuggestions.length === 0) {
 			await chrome.omnibox.setDefaultSuggestion({ description: SUGGESTIONS_PROMPT_NONE });
 			suggest([]);
@@ -264,7 +264,7 @@ export default defineBackground(() => {
 				},
 			});
 			const otherSuggestions = filteredSuggestions.slice(1);
-			suggest(formatSuggestions(otherSuggestions.slice(0, 5)));
+			suggest(formatSuggestions(otherSuggestions.slice(0, 10)));
 		}
 	});
 
