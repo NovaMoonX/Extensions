@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getLinks, getBlockedSuggestions, getTags } from '../../utils/storage.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
-import { Copy, Check, Settings } from '../ui/Icons.jsx';
+import { Copy, Check, Settings, ChevronDown, ChevronUp } from '../ui/Icons.jsx';
 
 function fuzzyMatch(keyword, searchTerm) {
   let searchIdx = 0;
@@ -11,6 +11,8 @@ function fuzzyMatch(keyword, searchTerm) {
   return searchIdx === searchTerm.length;
 }
 
+const TAG_COLLAPSED_LIMIT = 5;
+
 export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlocked, onSettings }) {
   const [pads, setPads] = useState({});
   const [search, setSearch] = useState('');
@@ -18,6 +20,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   const [copiedKeyword, setCopiedKeyword] = useState(null);
   const [tags, setTags] = useState([]);
   const [activeTagIds, setActiveTagIds] = useState([]);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
 
   const reload = useCallback(async () => {
     const [p, b, t] = await Promise.all([getLinks(), getBlockedSuggestions(), getTags()]);
@@ -54,6 +57,9 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
     setTimeout(() => setCopiedKeyword(null), 1500);
   }
 
+  const visibleTags = tagsExpanded ? tags : tags.slice(0, TAG_COLLAPSED_LIMIT);
+  const hasMoreTags = tags.length > TAG_COLLAPSED_LIMIT;
+
   return (
     <div id="listView">
       <div className="list-header">
@@ -77,25 +83,39 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
       </div>
 
       {tags.length > 0 && (
-        <div className="tag-filter-bar">
-          {tags.map((tag) => {
-            const active = activeTagIds.includes(tag.id);
-            return (
-              <button
-                key={tag.id}
-                className={`tag-chip${active ? ' tag-chip--active' : ''}`}
-                onClick={() =>
-                  setActiveTagIds(
-                    active
-                      ? activeTagIds.filter((id) => id !== tag.id)
-                      : [...activeTagIds, tag.id]
-                  )
-                }
-              >
-                {tag.label}
-              </button>
-            );
-          })}
+        <div className="tag-filter-section">
+          <div className={`tag-filter-bar${tagsExpanded ? ' tag-filter-bar--expanded' : ''}`}>
+            {visibleTags.map((tag) => {
+              const active = activeTagIds.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  className={`tag-chip${active ? ' tag-chip--active' : ''}`}
+                  onClick={() =>
+                    setActiveTagIds(
+                      active
+                        ? activeTagIds.filter((id) => id !== tag.id)
+                        : [...activeTagIds, tag.id]
+                    )
+                  }
+                >
+                  {tag.label}
+                </button>
+              );
+            })}
+          </div>
+          {hasMoreTags && (
+            <button
+              className="tag-filter-toggle"
+              onClick={() => setTagsExpanded((v) => !v)}
+            >
+              {tagsExpanded ? (
+                <><ChevronUp size={12} strokeWidth={2.5} style={{ verticalAlign: 'middle', marginRight: 3 }} />Show less</>
+              ) : (
+                <><ChevronDown size={12} strokeWidth={2.5} style={{ verticalAlign: 'middle', marginRight: 3 }} />+{tags.length - TAG_COLLAPSED_LIMIT} more</>
+              )}
+            </button>
+          )}
         </div>
       )}
 
@@ -144,3 +164,4 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
     </div>
   );
 }
+

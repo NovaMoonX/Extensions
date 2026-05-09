@@ -14,4 +14,8 @@ export {
   ListOrdered,
   Link2,
   Unlink2,
+  Trash2,
+  Plus,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
