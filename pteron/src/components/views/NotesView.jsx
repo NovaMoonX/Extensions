@@ -28,7 +28,7 @@ export default function NotesView({ keyword, fromDetail, onBack, onCreateLink })
     extensions: [
       StarterKit,
       Underline,
-      Link.configure({ openOnClick: false, autolink: true }),
+      Link.configure({ openOnClick: false }),
     ],
     content: '',
     editable: false,
