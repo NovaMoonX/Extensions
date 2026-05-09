@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { saveLink, deleteLink, getLink, keywordExists } from '../../utils/storage.js';
+import { saveLink, deleteLink, getLink, keywordExists, getTags } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
 import { FileText } from '../ui/Icons.jsx';
@@ -23,10 +23,16 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   const [keywordWarning, setKeywordWarning] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [originalUrlWithParams, setOriginalUrlWithParams] = useState(null);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
   const descRef = useRef(null);
   const keywordRef = useRef(null);
 
   const isEdit = !!editingKeyword;
+
+  useEffect(() => {
+    getTags().then(setAvailableTags);
+  }, []);
 
   useEffect(() => {
     async function initForm() {
@@ -36,6 +42,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           setUrl(pad.url);
           setKeyword(editingKeyword);
           setDescription(pad.description || '');
+          setSelectedTagIds(pad.tagIds || []);
         }
         setTimeout(() => descRef.current?.focus(), 0);
       } else if (prefillData) {
@@ -116,6 +123,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         description: desc || kw,
         timesUsed: existing?.timesUsed || 0,
         lastUsed: existing?.lastUsed || Date.now(),
+        tagIds: selectedTagIds,
       });
       await chrome.storage.session.remove('pendingUrl');
       setMessage({ text: isEdit ? 'Link updated!' : 'Link saved!', type: 'success' });
@@ -176,6 +184,33 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           <input id="description" ref={descRef} type="text" placeholder="e.g., Open My App"
             value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
+
+        {availableTags.length > 0 && (
+          <div className="form-group">
+            <label>Tags</label>
+            <div className="tag-selector">
+              {availableTags.map((tag) => {
+                const active = selectedTagIds.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className={`tag-chip${active ? ' tag-chip--active' : ''}`}
+                    onClick={() =>
+                      setSelectedTagIds(
+                        active
+                          ? selectedTagIds.filter((id) => id !== tag.id)
+                          : [...selectedTagIds, tag.id]
+                      )
+                    }
+                  >
+                    {tag.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="button-group">
           <button type="submit" className="save">{isEdit ? 'Update' : 'Save'}</button>

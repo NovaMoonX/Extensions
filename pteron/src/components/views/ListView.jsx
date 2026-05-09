@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getLinks, getBlockedSuggestions } from '../../utils/storage.js';
+import { getLinks, getBlockedSuggestions, getTags } from '../../utils/storage.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
 import { Copy, Check, Settings } from '../ui/Icons.jsx';
 
@@ -16,25 +16,33 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   const [search, setSearch] = useState('');
   const [blockedCount, setBlockedCount] = useState(0);
   const [copiedKeyword, setCopiedKeyword] = useState(null);
+  const [tags, setTags] = useState([]);
+  const [activeTagIds, setActiveTagIds] = useState([]);
 
   const reload = useCallback(async () => {
-    const [p, b] = await Promise.all([getLinks(), getBlockedSuggestions()]);
+    const [p, b, t] = await Promise.all([getLinks(), getBlockedSuggestions(), getTags()]);
     setPads(p);
     setBlockedCount(b.length);
+    setTags(t);
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
 
   const filtered = (() => {
     const keys = Object.keys(pads);
-    if (!search) return keys;
+    // Tag filter: if any tag is selected, only show links that have at least one
+    const tagFiltered = activeTagIds.length === 0
+      ? keys
+      : keys.filter((k) => pads[k].tagIds?.some((id) => activeTagIds.includes(id)));
+
+    if (!search) return tagFiltered;
     const s = search.toLowerCase();
-    const sub = keys.filter(k =>
+    const sub = tagFiltered.filter(k =>
       k.toLowerCase().includes(s) ||
       pads[k].description?.toLowerCase().includes(s) ||
       pads[k].url?.toLowerCase().includes(s)
     );
-    const fuzzy = keys.filter(k => !sub.includes(k) && fuzzyMatch(k.toLowerCase(), s));
+    const fuzzy = tagFiltered.filter(k => !sub.includes(k) && fuzzyMatch(k.toLowerCase(), s));
     return [...sub, ...fuzzy];
   })();
 
@@ -67,6 +75,29 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      {tags.length > 0 && (
+        <div className="tag-filter-bar">
+          {tags.map((tag) => {
+            const active = activeTagIds.includes(tag.id);
+            return (
+              <button
+                key={tag.id}
+                className={`tag-chip${active ? ' tag-chip--active' : ''}`}
+                onClick={() =>
+                  setActiveTagIds(
+                    active
+                      ? activeTagIds.filter((id) => id !== tag.id)
+                      : [...activeTagIds, tag.id]
+                  )
+                }
+              >
+                {tag.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="suggestions-list">
         {Object.keys(pads).length === 0 ? (
