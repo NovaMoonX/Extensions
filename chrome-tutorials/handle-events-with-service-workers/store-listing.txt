@@ -41,6 +41,10 @@ No more bookmark folders. No more typing full URLs. Just instant access to every
 
 Version History
 
+1.10
+- Internal storage keys now use a reserved prefix so they can never be overwritten by a user-defined keyword
+- Keywords that start with an underscore are now blocked to prevent conflicts with internal state
+
 1.9
 - Notes for quick links — attach personal notes to any saved link, with edit and view modes
 - Quick Link detail view — click any card in your list to see its full details, plus one-tap access to Notes and Edit
