@@ -8,7 +8,6 @@ import {
   generateKeywordAndDescription,
   generateTagSuggestions,
 } from '../../utils/ai.js';
-import ShortcutHint from '../ui/ShortcutHint.jsx';
 import { FileText, Trash2, Plus } from '../ui/Icons.jsx';
 
 async function getKeywordError(keyword, editingKeyword) {
@@ -22,7 +21,7 @@ async function getKeywordError(keyword, editingKeyword) {
   return null;
 }
 
-export default function FormView({ editingKeyword, prefillData, pendingUrl, pendingTitle, onSaved, onCancel, onViewNotes, onViewAll }) {
+export default function FormView({ editingKeyword, prefillData, pendingUrl, pendingTitle, onSaved, onCancel, onViewNotes, onViewAll, onViewShortcuts }) {
   const [url, setUrl] = useState('');
   const [keyword, setKeyword] = useState('');
   const [description, setDescription] = useState('');
@@ -447,7 +446,11 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
       )}
 
       <button className="view-all" onClick={onViewAll}>View All Links</button>
-      <ShortcutHint />
+      <div className="shortcut-hint">
+        <button type="button" className="shortcut-link-btn" onClick={onViewShortcuts}>
+          View keyboard shortcuts
+        </button>
+      </div>
     </div>
   );
 }

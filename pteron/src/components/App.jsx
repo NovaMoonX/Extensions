@@ -8,6 +8,7 @@ import SettingsView from './views/SettingsView.jsx';
 import DetailView from './views/DetailView.jsx';
 import NotesView from './views/NotesView.jsx';
 import TagManagerView from './views/TagManagerView.jsx';
+import ShortcutsView from './views/ShortcutsView.jsx';
 import ExportDialog from './dialogs/ExportDialog.jsx';
 import ImportDialog from './dialogs/ImportDialog.jsx';
 
@@ -58,6 +59,7 @@ export default function App() {
           onCancel={() => navigate('list')}
           onViewNotes={(keyword) => navigate('notes', { keyword, fromDetail: false })}
           onViewAll={() => navigate('list')}
+          onViewShortcuts={() => navigate('shortcuts', { from: 'form', returnData: viewData })}
         />
       )}
       {view === 'list' && (
@@ -67,6 +69,7 @@ export default function App() {
           onViewDetail={(keyword) => navigate('detail', { keyword })}
           onViewBlocked={() => navigate('blocked')}
           onSettings={() => navigate('settings')}
+          onViewShortcuts={() => navigate('shortcuts', { from: 'list' })}
         />
       )}
       {view === 'blocked' && (
@@ -101,6 +104,11 @@ export default function App() {
           fromDetail={viewData?.fromDetail || false}
           onBack={(keyword, fromDetail) => fromDetail ? navigate('detail', { keyword }) : navigate('list')}
           onCreateLink={() => navigate('form', null)}
+        />
+      )}
+      {view === 'shortcuts' && (
+        <ShortcutsView
+          onBack={() => navigate(viewData?.from === 'form' ? 'form' : 'list', viewData?.from === 'form' ? viewData?.returnData || null : null)}
         />
       )}
       {exportOpen && (

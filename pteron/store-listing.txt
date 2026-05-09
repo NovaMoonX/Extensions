@@ -18,7 +18,7 @@ Attach notes to any saved link. Format them with bold, italic, underline, strike
 Visit a site frequently? Pteron suggests saving it automatically, with a keyword drawn from the page title. Accept, edit, or block — you're in control.
 
 ⌨️ Keyboard Shortcuts
-Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac). Open your saved links list directly: Alt+Shift+P (Windows/Linux) or Alt+P (Mac).
+Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac). Open your saved links list directly: Alt+Shift+P (Windows/Linux) or Alt+P (Mac). The popup now includes a discreet "View keyboard shortcuts" link that opens a dedicated shortcuts screen.
 
 🔍 Instant Search
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast.

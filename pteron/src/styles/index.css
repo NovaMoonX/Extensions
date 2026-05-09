@@ -545,11 +545,60 @@ button.edit:hover {
 }
 
 .shortcut-hint {
-  text-align: center;
-  font-size: 11px;
-  color: #64748B;
   margin-top: 16px;
-  padding: 8px;
+  text-align: center;
+}
+
+.shortcut-link-btn {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.shortcut-link-btn:hover {
+  color: #2563EB;
+}
+
+.shortcuts-screen {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcuts-screen__row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.shortcuts-screen__key {
+  font-size: 12px;
+  color: #2563EB;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.shortcuts-screen__separator {
+  font-size: 12px;
+  color: #93C5FD;
+  font-weight: 600;
+}
+
+.shortcuts-screen__description {
+  font-size: 12px;
+  color: #60A5FA;
+  line-height: 1.35;
 }
 
 kbd {
@@ -1192,6 +1241,26 @@ kbd {
 
   .shortcut-hint {
     color: #64748B;
+  }
+
+  .shortcut-link-btn {
+    color: #64748B;
+  }
+
+  .shortcut-link-btn:hover {
+    color: #93C5FD;
+  }
+
+  .shortcuts-screen__key {
+    color: #93C5FD;
+  }
+
+  .shortcuts-screen__separator {
+    color: #3B82F6;
+  }
+
+  .shortcuts-screen__description {
+    color: #60A5FA;
   }
 
   kbd {

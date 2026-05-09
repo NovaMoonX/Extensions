@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getLinks, getBlockedSuggestions, getTags } from '../../utils/storage.js';
-import ShortcutHint from '../ui/ShortcutHint.jsx';
 import { Copy, Check, Settings, ChevronDown, ChevronUp } from '../ui/Icons.jsx';
 
 function fuzzyMatch(keyword, searchTerm) {
@@ -13,7 +12,7 @@ function fuzzyMatch(keyword, searchTerm) {
 
 const TAG_CHAR_LIMIT = 30;
 
-export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlocked, onSettings }) {
+export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlocked, onSettings, onViewShortcuts }) {
   const [pads, setPads] = useState({});
   const [search, setSearch] = useState('');
   const [blockedCount, setBlockedCount] = useState(0);
@@ -173,7 +172,11 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
         <button className="footer-btn" onClick={onSettings}><Settings size={13} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 4 }} />Settings</button>
       </div>
 
-      <ShortcutHint />
+      <div className="shortcut-hint">
+        <button type="button" className="shortcut-link-btn" onClick={onViewShortcuts}>
+          View keyboard shortcuts
+        </button>
+      </div>
     </div>
   );
 }
