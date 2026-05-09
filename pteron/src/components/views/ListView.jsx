@@ -65,7 +65,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
 
       <div className="suggestions-list">
         {Object.keys(pads).length === 0 ? (
-          <div className="empty-state">No saved links yet.<br />Type p/ in the address bar to add one!</div>
+          <div className="empty-state">No saved links yet.<br />Type <kbd>p</kbd> + space in the address bar, or <kbd>p/keyword</kbd> directly!</div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">No matching links found.</div>
         ) : filtered.map((keyword) => {

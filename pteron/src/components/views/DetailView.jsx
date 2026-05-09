@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getLink } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
 
-export default function DetailView({ keyword, onBack, onEdit, onViewLeaflets }) {
+export default function DetailView({ keyword, onBack, onEdit, onViewNotes }) {
   const [pad, setPad] = useState(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function DetailView({ keyword, onBack, onEdit, onViewLeaflets }) 
         </div>
       </div>
       <div className="detail-actions">
-        <button className="detail-notes-btn" onClick={() => onViewLeaflets(keyword)}>📝 Notes</button>
+        <button className="detail-notes-btn" onClick={() => onViewNotes(keyword)}>📝 Notes</button>
         <button className="detail-edit-btn" onClick={() => onEdit(keyword)}>✏️ Edit</button>
       </div>
     </div>

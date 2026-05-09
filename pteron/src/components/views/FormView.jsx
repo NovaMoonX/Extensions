@@ -14,7 +14,7 @@ async function getKeywordError(keyword, editingKeyword) {
   return null;
 }
 
-export default function FormView({ editingKeyword, prefillData, pendingUrl, pendingTitle, onSaved, onCancel, onViewLeaflets, onViewAll }) {
+export default function FormView({ editingKeyword, prefillData, pendingUrl, pendingTitle, onSaved, onCancel, onViewNotes, onViewAll }) {
   const [url, setUrl] = useState('');
   const [keyword, setKeyword] = useState('');
   const [description, setDescription] = useState('');
@@ -186,7 +186,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
       </form>
 
       {isEdit && editingKeyword && (
-        <button type="button" className="form-notes-btn" onClick={() => onViewLeaflets(editingKeyword)}>
+        <button type="button" className="form-notes-btn" onClick={() => onViewNotes(editingKeyword)}>
           📝 View / Edit Notes
         </button>
       )}

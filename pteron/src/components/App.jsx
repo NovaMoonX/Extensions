@@ -55,7 +55,7 @@ export default function App() {
           pendingTitle={viewData?.pendingTitle || null}
           onSaved={() => window.close()}
           onCancel={() => navigate('list')}
-          onViewLeaflets={(keyword) => navigate('notes', { keyword, fromDetail: false })}
+          onViewNotes={(keyword) => navigate('notes', { keyword, fromDetail: false })}
           onViewAll={() => navigate('list')}
         />
       )}
@@ -85,7 +85,7 @@ export default function App() {
           keyword={viewData?.keyword}
           onBack={() => navigate('list')}
           onEdit={(keyword) => navigate('form', { keyword })}
-          onViewLeaflets={(keyword) => navigate('notes', { keyword, fromDetail: true })}
+          onViewNotes={(keyword) => navigate('notes', { keyword, fromDetail: true })}
         />
       )}
       {view === 'notes' && (

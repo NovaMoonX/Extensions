@@ -11,9 +11,9 @@ import {
 export default defineBackground(() => {
 	const URL_GOOGLE_SEARCH = 'https://www.google.com/search?q=';
 	const OMNIBOX_KEYWORD = 'p';
-	const SUGGESTIONS_PROMPT_EXISTS = 'Type to search your saved links or enter a URL to save it.';
+	const SUGGESTIONS_PROMPT_EXISTS = 'Type a keyword to navigate, or enter a URL to save a new link.';
 	const SUGGESTIONS_PROMPT_NONE =
-		'No saved links yet. Enter a URL to save it, or search the web.';
+		'No saved links yet. Enter a URL to save your first link, or search the web.';
 
 	// Migrate legacy non-keyword storage keys to the __ prefix convention so that
 	// user-defined keywords can never accidentally overwrite internal app state.
