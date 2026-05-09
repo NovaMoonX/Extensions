@@ -676,7 +676,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-
   // Notes button in the edit form
   formNotesBtn.addEventListener('click', () => {
     if (editingKeyword) {
