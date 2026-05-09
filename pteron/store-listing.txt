@@ -18,7 +18,7 @@ Attach notes to any saved link. They appear the moment you land on the site, kee
 Visit a site frequently? Pteron suggests saving it automatically, with a keyword drawn from the page title. Accept, edit, or block — you're in control.
 
 ⌨️ Keyboard Shortcuts
-Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+M (Windows/Linux) or Alt+Shift+M (Mac).
+Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac).
 
 🔍 Instant Search
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast.
@@ -41,6 +41,7 @@ Version History
 1.0
 - Pteron launch
 - Cross-browser support (Chrome, Firefox, Edge)
+- Refined wing-inspired iconography and branding
 - p/<keyword> direct navigation pattern
 - Aegean design system: Pteron Blue (#2563EB)
 - Contextual Notes system

@@ -4,8 +4,8 @@ export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    name: 'Pteron',
-    description: 'Pteron — Shortcut your browser.',
+    name: 'Pteron: Shortcut your browser',
+    description: 'Turns your address bar into a command center. Save links, navigate with p/keyword, attach notes, and sync across devices.',
     version: '1.0.0',
     permissions: ['storage', 'webNavigation', 'tabs'],
     host_permissions: ['<all_urls>'],
@@ -30,7 +30,7 @@ export default defineConfig({
         description: 'Save current page as a Link'
       },
       'open-notes': {
-        suggested_key: { default: 'Ctrl+Shift+M', mac: 'Alt+Shift+M' },
+        suggested_key: { default: 'Ctrl+Shift+L', mac: 'Alt+Shift+L' },
         description: 'Open Notes for current page'
       }
     }

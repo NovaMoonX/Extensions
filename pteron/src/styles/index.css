@@ -473,6 +473,31 @@ button.edit:hover {
   flex: 1;
 }
 
+.brand-mark {
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.brand-logo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.brand-logo--dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .brand-logo--light {
+    display: none;
+  }
+  .brand-logo--dark {
+    display: block;
+  }
+}
+
 .add-new {
   background-color: #2563EB;
   color: white;

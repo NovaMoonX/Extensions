@@ -2,7 +2,7 @@ export default function ShortcutHint() {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const modKey = isMac ? 'Option' : 'Ctrl';
   const primaryShortcut = `${modKey}+L`;
-  const secondaryShortcut = isMac ? 'Option+Shift+M' : 'Ctrl+Shift+M';
+  const secondaryShortcut = isMac ? 'Option+Shift+L' : 'Ctrl+Shift+L';
 
   return (
     <div className="shortcut-hint">

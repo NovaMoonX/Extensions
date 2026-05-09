@@ -48,6 +48,10 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   return (
     <div id="listView">
       <div className="list-header">
+        <div className="brand-mark">
+          <img src="/icons/logo-light-bg.svg" alt="Pteron" className="brand-logo brand-logo--light" />
+          <img src="/icons/logo-dark-bg.svg" alt="Pteron" className="brand-logo brand-logo--dark" />
+        </div>
         <h2>Saved Links</h2>
         <button className="add-new" onClick={onAddNew}>+ Add New</button>
       </div>
