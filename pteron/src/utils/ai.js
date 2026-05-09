@@ -102,7 +102,12 @@ async function _generateKeyword(session, title, pageText) {
     `Title: ${title.slice(0, 120)}\n` +
     `Content: ${pageText.slice(0, 400)}\n\n` +
     `Keyword:`;
-  const raw = (await session.prompt(prompt)).trim();
+  let raw;
+  try {
+    raw = (await session.prompt(prompt)).trim();
+  } catch {
+    return '';
+  }
   return raw
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -122,8 +127,12 @@ async function _generateDescription(session, title, pageText) {
     `Title: ${title.slice(0, 120)}\n` +
     `Content: ${pageText.slice(0, 400)}\n\n` +
     `Description:`;
-  const raw = (await session.prompt(prompt)).trim();
-  return raw.slice(0, 60);
+  try {
+    const raw = (await session.prompt(prompt)).trim();
+    return raw.slice(0, 60);
+  } catch {
+    return '';
+  }
 }
 
 async function _suggestTags(session, title, pageText, existingTags) {
@@ -138,7 +147,12 @@ async function _suggestTags(session, title, pageText, existingTags) {
     `Title: ${title.slice(0, 120)}\n` +
     `Content: ${pageText.slice(0, 400)}\n\n` +
     `JSON:`;
-  const raw = await session.prompt(prompt);
+  let raw;
+  try {
+    raw = await session.prompt(prompt);
+  } catch {
+    return { matched: [], suggested: [] };
+  }
   try {
     const m = raw.match(/\{[\s\S]*?\}/);
     if (!m) return { matched: [], suggested: [] };

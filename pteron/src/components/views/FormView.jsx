@@ -136,8 +136,11 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
 
           setSelectedTagIds(newIds);
           setAiPhase('done');
-        } catch {
-          if (!cancelled) setAiPhase('unavailable');
+        } catch (err) {
+          if (!cancelled) {
+            console.error('[Pteron AI] Session or generation failed:', err);
+            setAiPhase('unavailable');
+          }
         }
       }
     }
@@ -147,7 +150,9 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
     return () => {
       cancelled = true;
       if (aiSessionRef.current) {
-        try { aiSessionRef.current.destroy(); } catch { /* ignore */ }
+        try { aiSessionRef.current.destroy(); } catch (err) {
+          console.warn('[Pteron AI] Session cleanup error:', err);
+        }
         aiSessionRef.current = null;
       }
     };
