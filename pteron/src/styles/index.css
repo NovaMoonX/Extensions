@@ -823,6 +823,28 @@ kbd {
   color: #64748B;
 }
 
+/* === Semantic Search Results === */
+.semantic-results-section {
+  margin-top: 8px;
+}
+
+.semantic-results-label {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+.suggestion-item--semantic {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
 /* === Detail View === */
 .detail-content {
   background-color: #F1F5F9;
@@ -1630,6 +1652,14 @@ kbd {
 
   .empty-state {
     color: #888;
+  }
+
+  .semantic-results-label {
+    color: #475569;
+  }
+
+  .suggestion-item--semantic {
+    border-color: #2d3748;
   }
 
   .setting-item {

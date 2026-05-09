@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getLinks, getBlockedSuggestions, getTags } from '../../utils/storage.js';
-import { Copy, Check, Settings, ChevronDown, ChevronUp } from '../ui/Icons.jsx';
+import { syncVectors, semanticSearch } from '../../utils/embeddings.ts';
+import { Copy, Check, Settings, ChevronDown, ChevronUp, Sparkles } from '../ui/Icons.jsx';
 
 function fuzzyMatch(keyword, searchTerm) {
   let searchIdx = 0;
@@ -20,6 +21,8 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   const [tags, setTags] = useState([]);
   const [activeTagIds, setActiveTagIds] = useState([]);
   const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [semanticMatches, setSemanticMatches] = useState([]);
+  const syncInitiated = useRef(false);
 
   const reload = useCallback(async () => {
     const [p, b, t] = await Promise.all([getLinks(), getBlockedSuggestions(), getTags()]);
@@ -29,6 +32,14 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+
+  // Start background vector sync once links are loaded — fire-and-forget
+  useEffect(() => {
+    if (!syncInitiated.current && Object.keys(pads).length > 0) {
+      syncInitiated.current = true;
+      syncVectors(pads, tags).catch(() => {});
+    }
+  }, [pads, tags]);
 
   const filtered = (() => {
     const keys = Object.keys(pads);
@@ -47,6 +58,27 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
     const fuzzy = tagFiltered.filter(k => !sub.includes(k) && fuzzyMatch(k.toLowerCase(), s));
     return [...sub, ...fuzzy];
   })();
+
+  // Debounced semantic search — runs 400 ms after the user stops typing
+  useEffect(() => {
+    if (!search.trim()) {
+      setSemanticMatches([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const matches = await semanticSearch(search.trim(), filtered);
+        // Only keep results that correspond to links still in pads
+        setSemanticMatches(matches.filter((m) => pads[m.keyword]));
+      } catch {
+        setSemanticMatches([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, pads]);
 
   async function handleCopy(e, url) {
     e.stopPropagation();
@@ -71,6 +103,33 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   })();
   const visibleTags = tagsExpanded ? tags : tags.slice(0, collapsedCount);
   const hasMoreTags = tags.length > collapsedCount;
+
+  function renderLinkCard(keyword, pad, isSemantic = false) {
+    return (
+      <div key={keyword} className={`suggestion-item${isSemantic ? ' suggestion-item--semantic' : ''}`} onClick={() => onViewDetail(keyword)}>
+        <div className="suggestion-header">
+          <a href={pad.url} target="_blank" rel="noreferrer" className="suggestion-keyword"
+            onClick={(e) => e.stopPropagation()}>
+            {keyword}
+          </a>
+          <div className="suggestion-actions">
+            <button
+              className="copy-icon-btn"
+              data-keyword={keyword}
+              title="Copy URL"
+              onClick={(e) => handleCopy(e, pad.url)}
+            >
+              {copiedKeyword === keyword
+                ? <Check size={14} strokeWidth={2.5} />
+                : <Copy size={14} strokeWidth={2} />}
+            </button>
+          </div>
+        </div>
+        <div className="suggestion-description">{pad.description || keyword}</div>
+        <div className="suggestion-url">{pad.url}</div>
+      </div>
+    );
+  }
 
   return (
     <div id="listView">
@@ -134,35 +193,27 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
       <div className="suggestions-list">
         {Object.keys(pads).length === 0 ? (
           <div className="empty-state">No saved links yet.<br />Type <kbd>p</kbd> + space in the address bar, or <kbd>p/keyword</kbd> directly!</div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length === 0 && semanticMatches.length === 0 && search ? (
           <div className="empty-state">No matching links found.</div>
-        ) : filtered.map((keyword) => {
-          const pad = pads[keyword];
-          return (
-            <div key={keyword} className="suggestion-item" onClick={() => onViewDetail(keyword)}>
-              <div className="suggestion-header">
-                <a href={pad.url} target="_blank" rel="noreferrer" className="suggestion-keyword"
-                  onClick={(e) => e.stopPropagation()}>
-                  {keyword}
-                </a>
-                <div className="suggestion-actions">
-                  <button
-                    className="copy-icon-btn"
-                    data-keyword={keyword}
-                    title="Copy URL"
-                    onClick={(e) => handleCopy(e, pad.url)}
-                  >
-                    {copiedKeyword === keyword
-                      ? <Check size={14} strokeWidth={2.5} />
-                      : <Copy size={14} strokeWidth={2} />}
-                  </button>
+        ) : (
+          <>
+            {filtered.map((keyword) => renderLinkCard(keyword, pads[keyword]))}
+
+            {semanticMatches.length > 0 && (
+              <div className="semantic-results-section">
+                <div className="semantic-results-label">
+                  <Sparkles size={12} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                  Best guess
                 </div>
+                {semanticMatches.map(({ keyword }) => renderLinkCard(keyword, pads[keyword], true))}
               </div>
-              <div className="suggestion-description">{pad.description || keyword}</div>
-              <div className="suggestion-url">{pad.url}</div>
-            </div>
-          );
-        })}
+            )}
+
+            {filtered.length === 0 && !search && (
+              <div className="empty-state">No saved links yet.<br />Type <kbd>p</kbd> + space in the address bar, or <kbd>p/keyword</kbd> directly!</div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="list-footer">
