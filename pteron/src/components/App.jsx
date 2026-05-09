@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePopupInit } from '../hooks/usePopupInit.js';
+import { bootAIEngine, onEngineStatus } from '../utils/aiEngine.ts';
 import SuggestionView from './views/SuggestionView.jsx';
 import FormView from './views/FormView.jsx';
 import ListView from './views/ListView.jsx';
@@ -18,6 +19,16 @@ export default function App() {
   const [viewData, setViewData] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [engineStatus, setEngineStatus] = useState({ status: 'idle', progress: 0 });
+
+  // Boot the AI engine the instant the popup opens — before any view is shown.
+  // This means WebLLM downloads/cache-loads happen in the background while the
+  // user browses the UI; by the time they reach the form it should be ready.
+  useEffect(() => {
+    bootAIEngine();
+    const unsub = onEngineStatus(setEngineStatus);
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (ready && initialView) {
@@ -41,6 +52,27 @@ export default function App() {
 
   return (
     <>
+      {/* WebLLM first-run download overlay — shown only once, at the App level */}
+      {engineStatus.status === 'downloading' && (
+        <div className="ai-webllm-overlay" role="status" aria-live="polite">
+          <div className="ai-webllm-overlay-inner">
+            <img src="/icons/icon-48.png" alt="Pteron" className="ai-webllm-logo" />
+            <p className="ai-webllm-title">Preparing your Wings…</p>
+            <p className="ai-webllm-subtitle">
+              Downloading the AI model for the first time.<br />
+              This only happens once.
+            </p>
+            <div className="ai-webllm-progress-track">
+              <div
+                className="ai-webllm-progress-fill"
+                style={{ width: `${Math.round(engineStatus.progress * 100)}%` }}
+              />
+            </div>
+            <span className="ai-webllm-percent">{Math.round(engineStatus.progress * 100)}%</span>
+          </div>
+        </div>
+      )}
+
       {view === 'suggestion' && (
         <SuggestionView
           data={viewData}

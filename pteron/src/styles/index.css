@@ -1146,6 +1146,267 @@ kbd {
   }
 }
 
+/* ── AI suggestion banners (keyword / description) ─────────────────────── */
+.ai-suggestion {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1D4ED8;
+}
+
+.ai-suggestion-label {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.ai-suggestion-value {
+  flex: 1;
+  font-family: monospace;
+  font-size: 11.5px;
+  color: #0F172A;
+  word-break: break-all;
+}
+
+.ai-suggestion-accept {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background-color: #2563EB;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-suggestion-accept:hover {
+  background-color: #1D4ED8;
+}
+
+.ai-suggestion-dismiss {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 5px;
+  background: none;
+  border: 1px solid #93C5FD;
+  border-radius: 6px;
+  color: #2563EB;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ai-suggestion-dismiss:hover {
+  background-color: #DBEAFE;
+}
+
+/* ── AI tag suggestion chips ────────────────────────────────────────────── */
+.ai-tag-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ai-tag-suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ai-tag-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 10px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 20px;
+  font-size: 11.5px;
+  color: #1D4ED8;
+}
+
+.ai-tag-suggestion-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-tag-new-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ai-tag-accept-btn,
+.ai-tag-dismiss-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ai-tag-accept-btn {
+  background-color: #2563EB;
+  color: #fff;
+}
+
+.ai-tag-accept-btn:hover {
+  background-color: #1D4ED8;
+}
+
+.ai-tag-dismiss-btn {
+  background-color: transparent;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+}
+
+.ai-tag-dismiss-btn:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-suggestion,
+  .ai-tag-suggestion-chip {
+    background-color: #1e2d4a;
+    border-color: #1D4ED8;
+    color: #93C5FD;
+  }
+
+  .ai-suggestion-value {
+    color: #e0e0e0;
+  }
+
+  .ai-tag-new-badge {
+    background-color: #1D4ED8;
+    color: #DBEAFE;
+  }
+
+  .ai-suggestion-dismiss {
+    border-color: #1D4ED8;
+    color: #93C5FD;
+  }
+
+  .ai-suggestion-dismiss:hover {
+    background-color: #1e3a6a;
+  }
+
+  .ai-tag-dismiss-btn {
+    border-color: #334155;
+    color: #94A3B8;
+  }
+
+  .ai-tag-dismiss-btn:hover {
+    background-color: #1E293B;
+    color: #e0e0e0;
+  }
+}
+
+/* ── WebLLM model install overlay (Firefox / Safari first run) ──────────── */
+.ai-webllm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(11, 14, 20, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.ai-webllm-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 24px;
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -8px rgb(0 0 0 / 0.35);
+  text-align: center;
+  max-width: 240px;
+  width: 100%;
+}
+
+.ai-webllm-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.ai-webllm-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0F172A;
+}
+
+.ai-webllm-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+.ai-webllm-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: #E2E8F0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ai-webllm-progress-fill {
+  height: 100%;
+  background-color: #2563EB;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+  min-width: 8px;
+}
+
+.ai-webllm-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563EB;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-webllm-overlay-inner {
+    background-color: #1E293B;
+  }
+
+  .ai-webllm-title {
+    color: #F1F5F9;
+  }
+
+  .ai-webllm-progress-track {
+    background-color: #334155;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #0B0E14;

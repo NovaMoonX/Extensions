@@ -1,14 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { saveLink, deleteLink, getLink, keywordExists, getTags, saveTags } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
-import {
-  detectAIEnvironment,
-  createChromeAISession,
-  extractPageText,
-  generateKeywordAndDescription,
-  generateTagSuggestions,
-} from '../../utils/ai.js';
-import { FileText, Trash2, Plus } from '../ui/Icons.jsx';
+import { useAIEnhancement } from '../../hooks/useAIEnhancement';
+import { FileText, Trash2, Plus, Check, X } from '../ui/Icons.jsx';
 
 async function getKeywordError(keyword, editingKeyword) {
   if (keyword.startsWith('__')) {
@@ -35,127 +29,19 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [newTagError, setNewTagError] = useState('');
 
-  // AI state -----------------------------------------------------------
-  // aiPhase: 'idle' | 'initializing' | 'stage2' | 'stage3' | 'done' | 'unavailable'
-  const [aiPhase, setAiPhase] = useState('idle');
-  const [modelProgress, setModelProgress] = useState(0);
-  const aiSessionRef = useRef(null);
-  const pageTitleRef = useRef('');
-  // --------------------------------------------------------------------
-
   const descRef = useRef(null);
   const keywordRef = useRef(null);
   const newTagRef = useRef(null);
 
   const isEdit = !!editingKeyword;
 
+  // AI enhancement (suggestions only — nothing is applied automatically)
+  const { aiPhase, modelProgress, pendingSuggestions, dismissKeyword, dismissDescription, dismissTag } =
+    useAIEnhancement(!isEdit && !prefillData, availableTags, pendingTitle || undefined);
+
   useEffect(() => {
     getTags().then(setAvailableTags);
   }, []);
-
-  // Kick off AI enhancement for new links (not edits, not prefill from suggestion)
-  useEffect(() => {
-    if (isEdit || prefillData) return;
-
-    let cancelled = false;
-
-    async function runAI() {
-      const env = await detectAIEnvironment();
-
-      if (env.type === 'none') {
-        setAiPhase('unavailable');
-        return;
-      }
-
-      if (env.type === 'webllm' && env.status === 'not-installed') {
-        setAiPhase('unavailable');
-        return;
-      }
-
-      if (env.type === 'chrome') {
-        try {
-          setAiPhase('initializing');
-          setModelProgress(0);
-
-          const session = await createChromeAISession(
-            'You are a helpful assistant that generates concise, accurate bookmark metadata.',
-            (ratio) => {
-              if (!cancelled) setModelProgress(ratio);
-            },
-          );
-          if (cancelled) { session.destroy(); return; }
-
-          aiSessionRef.current = session;
-
-          // Stage 2: refine keyword + description
-          setAiPhase('stage2');
-          const pageText = await extractPageText();
-          if (cancelled) return;
-
-          const title = pageTitleRef.current;
-          const { keyword: aiKeyword, description: aiDesc } =
-            await generateKeywordAndDescription(session, title, pageText);
-          if (cancelled) return;
-
-          setKeyword((prev) => aiKeyword || prev);
-          setDescription((prev) => aiDesc || prev);
-          if (aiKeyword) validateKeyword(aiKeyword, null);
-
-          // Stage 3: suggest tags
-          setAiPhase('stage3');
-          const tags = await getTags();
-          if (cancelled) return;
-
-          const tagResult = await generateTagSuggestions(session, title, pageText, tags);
-          if (cancelled) return;
-
-          // Apply matched existing tags
-          const matchedIds = tags
-            .filter((t) => tagResult.matched.includes(t.label))
-            .map((t) => t.id);
-
-          // Create and apply suggested new tags
-          const newTags = [...tags];
-          const newIds = [...matchedIds];
-          for (const label of tagResult.suggested) {
-            if (!newTags.some((t) => t.label.toLowerCase() === label.toLowerCase())) {
-              const newTag = { id: crypto.randomUUID(), label };
-              newTags.push(newTag);
-              newIds.push(newTag.id);
-            } else {
-              const existing = newTags.find((t) => t.label.toLowerCase() === label.toLowerCase());
-              if (existing && !newIds.includes(existing.id)) newIds.push(existing.id);
-            }
-          }
-
-          if (newTags.length > tags.length) {
-            await saveTags(newTags);
-            setAvailableTags(newTags);
-          }
-
-          setSelectedTagIds(newIds);
-          setAiPhase('done');
-        } catch (err) {
-          if (!cancelled) {
-            console.error('[Pteron AI] Session or generation failed:', err);
-            setAiPhase('unavailable');
-          }
-        }
-      }
-    }
-
-    runAI();
-
-    return () => {
-      cancelled = true;
-      if (aiSessionRef.current) {
-        try { aiSessionRef.current.destroy(); } catch (err) {
-          console.warn('[Pteron AI] Session cleanup error:', err);
-        }
-        aiSessionRef.current = null;
-      }
-    };
-  }, [isEdit, prefillData]);
 
   useEffect(() => {
     async function initForm() {
@@ -176,7 +62,6 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         setTimeout(() => keywordRef.current?.focus(), 0);
       } else if (pendingUrl) {
         const { url: u, keyword: k, description: d, originalUrl } = extractSuggestionFieldsFromTitle(pendingTitle || '', pendingUrl);
-        pageTitleRef.current = pendingTitle || '';
         setOriginalUrlWithParams(originalUrl || pendingUrl);
         setUrl(originalUrl || pendingUrl);
         setKeyword(k);
@@ -188,7 +73,6 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         try {
           const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
           if (tabs[0]?.url) {
-            pageTitleRef.current = tabs[0].title || '';
             const { url: u, keyword: k, description: d, originalUrl } = extractSuggestionFieldsFromTitle(tabs[0].title || '', tabs[0].url);
             setOriginalUrlWithParams(originalUrl || tabs[0].url);
             setUrl(originalUrl || tabs[0].url);
@@ -300,6 +184,22 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
     }
   }
 
+  async function handleAcceptAITag(suggestion) {
+    if (suggestion.isNew) {
+      // Create the new tag in storage before selecting it
+      const newTag = { id: crypto.randomUUID(), label: suggestion.label };
+      const updated = [...availableTags, newTag];
+      await saveTags(updated);
+      setAvailableTags(updated);
+      setSelectedTagIds((prev) => [...prev, newTag.id]);
+    } else {
+      setSelectedTagIds((prev) =>
+        prev.includes(suggestion.existingId) ? prev : [...prev, suggestion.existingId]
+      );
+    }
+    dismissTag(suggestion.tempId);
+  }
+
   return (
     <div id="formView">
       <div className="form-title-row">
@@ -311,7 +211,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         )}
       </div>
 
-      {/* AI model initialisation banner */}
+      {/* AI model initialization banner — shown while engine loads from cache */}
       {aiPhase === 'initializing' && (
         <div className="ai-init-banner">
           <span className="ai-init-label">🪶 Initializing Wings…</span>
@@ -354,6 +254,28 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           {keywordWarning && (
             <div className="keyword-warning">{keywordWarning}</div>
           )}
+          {pendingSuggestions.keyword && (
+            <div className="ai-suggestion">
+              <span className="ai-suggestion-label">🪶 AI suggests:</span>
+              <code className="ai-suggestion-value">{pendingSuggestions.keyword}</code>
+              <button
+                type="button"
+                className="ai-suggestion-accept"
+                title="Use this keyword"
+                onClick={() => { setKeyword(pendingSuggestions.keyword); validateKeyword(pendingSuggestions.keyword, editingKeyword); dismissKeyword(); }}
+              >
+                <Check size={12} strokeWidth={2.5} /> Use
+              </button>
+              <button
+                type="button"
+                className="ai-suggestion-dismiss"
+                title="Dismiss suggestion"
+                onClick={dismissKeyword}
+              >
+                <X size={12} strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className={`form-group${aiPhase === 'stage2' ? ' ai-field--thinking' : ''}`}>
@@ -363,6 +285,28 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           </label>
           <input id="description" ref={descRef} type="text" placeholder="e.g., Open My App"
             value={description} onChange={(e) => setDescription(e.target.value)} />
+          {pendingSuggestions.description && (
+            <div className="ai-suggestion">
+              <span className="ai-suggestion-label">🪶 AI suggests:</span>
+              <span className="ai-suggestion-value">{pendingSuggestions.description}</span>
+              <button
+                type="button"
+                className="ai-suggestion-accept"
+                title="Use this description"
+                onClick={() => { setDescription(pendingSuggestions.description); dismissDescription(); }}
+              >
+                <Check size={12} strokeWidth={2.5} /> Use
+              </button>
+              <button
+                type="button"
+                className="ai-suggestion-dismiss"
+                title="Dismiss suggestion"
+                onClick={dismissDescription}
+              >
+                <X size={12} strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stage 3: tags — thinking state while AI suggests */}
@@ -382,6 +326,39 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
               New tag
             </button>
           </div>
+
+          {/* AI tag suggestions — user approves or dismisses each one */}
+          {pendingSuggestions.tags && pendingSuggestions.tags.length > 0 && (
+            <div className="ai-tag-suggestions">
+              <span className="ai-suggestion-label">🪶 AI suggests:</span>
+              <div className="ai-tag-suggestion-chips">
+                {pendingSuggestions.tags.map((s) => (
+                  <span key={s.tempId} className="ai-tag-suggestion-chip">
+                    <span className="ai-tag-suggestion-label">
+                      {s.isNew && <span className="ai-tag-new-badge">new</span>}
+                      {s.label}
+                    </span>
+                    <button
+                      type="button"
+                      className="ai-tag-accept-btn"
+                      title={`Add tag "${s.label}"`}
+                      onClick={() => handleAcceptAITag(s)}
+                    >
+                      <Check size={11} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      className="ai-tag-dismiss-btn"
+                      title="Dismiss"
+                      onClick={() => dismissTag(s.tempId)}
+                    >
+                      <X size={11} strokeWidth={2.5} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {showNewTagInput && (
             <div className="tag-inline-create-form" role="group" aria-label="Create new tag">
