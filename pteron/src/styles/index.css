@@ -40,19 +40,95 @@ label {
   color: #0F172A;
 }
 
-input {
+input,
+textarea {
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 12px;
   box-sizing: border-box;
   font-size: 14px;
+  font-family: inherit;
+  background-color: #ffffff;
+  color: #0F172A;
 }
 
-input:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: #2563EB;
   box-shadow: 0 0 4px rgba(37, 99, 235, 0.3);
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.4;
+}
+
+input:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Wrapper for fields that may show an AI-filled badge */
+.ai-field-wrapper {
+  position: relative;
+}
+
+input.ai-filled,
+textarea.ai-filled {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+  padding-right: 54px;
+}
+
+/* Badge overlaid on the right edge of an AI-filled field */
+.ai-field-badge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  pointer-events: auto;
+  line-height: 1;
+}
+
+/* For textareas the badge sits at the top-right, not vertically centered */
+.ai-field-wrapper--textarea .ai-field-badge {
+  top: 9px;
+  transform: none;
+}
+
+.ai-field-badge-emoji {
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ai-field-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  flex: none;
+  background: none;
+  border: 1px solid #93C5FD;
+  border-radius: 50%;
+  color: #2563EB;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ai-field-clear:hover {
+  background-color: #DBEAFE;
 }
 
 .toggle-group {
@@ -1146,67 +1222,13 @@ kbd {
   }
 }
 
-/* ── AI suggestion banners (keyword / description) ─────────────────────── */
-.ai-suggestion {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 6px 10px;
-  background-color: #EFF6FF;
-  border: 1px solid #BFDBFE;
-  border-radius: 8px;
-  font-size: 12px;
-  color: #1D4ED8;
-}
-
+/* ── AI suggestion label (used by tag suggestions row) ──────────────────── */
 .ai-suggestion-label {
   font-weight: 600;
+  font-size: 12px;
   letter-spacing: -0.01em;
   white-space: nowrap;
-}
-
-.ai-suggestion-value {
-  flex: 1;
-  font-family: monospace;
-  font-size: 11.5px;
-  color: #0F172A;
-  word-break: break-all;
-}
-
-.ai-suggestion-accept {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
-  background-color: #2563EB;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ai-suggestion-accept:hover {
-  background-color: #1D4ED8;
-}
-
-.ai-suggestion-dismiss {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 5px;
-  background: none;
-  border: 1px solid #93C5FD;
-  border-radius: 6px;
-  color: #2563EB;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.ai-suggestion-dismiss:hover {
-  background-color: #DBEAFE;
+  color: #1D4ED8;
 }
 
 /* ── AI tag suggestion chips ────────────────────────────────────────────── */
@@ -1288,29 +1310,19 @@ kbd {
 }
 
 @media (prefers-color-scheme: dark) {
-  .ai-suggestion,
+  .ai-suggestion-label {
+    color: #93C5FD;
+  }
+
   .ai-tag-suggestion-chip {
     background-color: #1e2d4a;
     border-color: #1D4ED8;
     color: #93C5FD;
   }
 
-  .ai-suggestion-value {
-    color: #e0e0e0;
-  }
-
   .ai-tag-new-badge {
     background-color: #1D4ED8;
     color: #DBEAFE;
-  }
-
-  .ai-suggestion-dismiss {
-    border-color: #1D4ED8;
-    color: #93C5FD;
-  }
-
-  .ai-suggestion-dismiss:hover {
-    background-color: #1e3a6a;
   }
 
   .ai-tag-dismiss-btn {
@@ -1417,15 +1429,32 @@ kbd {
     color: #e0e0e0;
   }
 
-  input {
+  input,
+  textarea {
     background-color: #1E293B;
-    border-color: #1E293B;
+    border-color: #334155;
     color: #e0e0e0;
   }
 
-  input:focus {
+  input:focus,
+  textarea:focus {
     border-color: #93C5FD;
     box-shadow: 0 0 4px rgba(147, 197, 253, 0.5);
+  }
+
+  input.ai-filled,
+  textarea.ai-filled {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
+  }
+
+  .ai-field-clear {
+    border-color: #60A5FA;
+    color: #93C5FD;
+  }
+
+  .ai-field-clear:hover {
+    background-color: #1e3a6a;
   }
 
   #searchInput {

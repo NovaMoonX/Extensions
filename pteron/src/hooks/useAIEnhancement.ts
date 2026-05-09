@@ -78,6 +78,9 @@ export function useAIEnhancement(
 
   const sessionRef = useRef<AIEngineSession | null>(null);
   const pipelineRan = useRef(false);
+  // Always reflect the latest existingTags in the async pipeline, even if tags loaded after mount
+  const existingTagsRef = useRef<Tag[]>(existingTags);
+  existingTagsRef.current = existingTags;
 
   useEffect(() => {
     if (!enabled) return;
@@ -142,26 +145,32 @@ export function useAIEnhancement(
         // ── Stage 3: tags ────────────────────────────────────────────────
         setAiPhase('stage3');
         console.debug('[Pteron AI] Stage 3: generating tag suggestions…');
-        const tagResult = await generateTagSuggestions(typedSession, title, pageText, existingTags);
+        // Use the ref so we always have the latest tags even if they loaded after mount
+        const currentTags = existingTagsRef.current;
+        const tagResult = await generateTagSuggestions(typedSession, title, pageText, currentTags);
         console.debug('[Pteron AI] Stage 3 result — matched:', tagResult.matched, 'suggested:', tagResult.suggested);
         if (cancelled) return;
 
+        const normalizeLabel = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
         const tagSuggestions: AITagSuggestion[] = [
-          // Matched existing tags
-          ...existingTags
-            .filter((t) => tagResult.matched.includes(t.label))
+          // Matched existing tags — auto-select, show with indicator
+          ...currentTags
+            .filter((t) => tagResult.matched.some(
+              (m) => normalizeLabel(m) === normalizeLabel(t.label)
+            ))
             .map((t) => ({
               tempId: t.id,
               label: t.label,
               isNew: false,
               existingId: t.id,
             })),
-          // Suggested new tags (deduplicated against existing)
+          // Suggested new tags — deduplicated against existing (normalize before compare)
           ...tagResult.suggested
             .filter(
               (label) =>
-                !existingTags.some(
-                  (t) => t.label.toLowerCase() === label.toLowerCase(),
+                !currentTags.some(
+                  (t) => normalizeLabel(t.label) === normalizeLabel(label),
                 ),
             )
             .map((label) => ({
