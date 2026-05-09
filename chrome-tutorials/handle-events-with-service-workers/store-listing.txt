@@ -24,6 +24,8 @@ Attach personal notes to any quick link — stored separately so they never clut
 🔗 Quick Link Detail View
 Click any quick link card to open its detail view: keyword, description, URL, and one-tap access to Notes or Edit. Clean, focused, and no clutter.
 
+📤 Export & Import
+Take your links with you. Export all your saved quick links and notes as a JSON file. Import them on another device — choose whether to overwrite existing data or only fill in gaps. Exports are compatible with Pteron, our next-generation extension.
 
 Sites you've dismissed are tracked in a dedicated Blocked Suggestions view — searchable and easy to unblock whenever you change your mind.
 
@@ -40,6 +42,11 @@ No more bookmark folders. No more typing full URLs. Just instant access to every
 ---
 
 Version History
+
+1.11
+- Export all quick links and notes to a JSON file (Settings → Export Data)
+- Import links and notes from a JSON file — choose to merge or overwrite existing data (Settings → Import Data)
+- Fixed omnibox suggestions: links and notes with & or < in their description are no longer silently dropped from the suggestion dropdown
 
 1.10
 - Internal storage keys now use a reserved prefix so they can never be overwritten by a user-defined keyword

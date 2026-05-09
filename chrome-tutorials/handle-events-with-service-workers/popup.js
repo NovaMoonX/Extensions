@@ -47,6 +47,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const autoSuggestionsToggle = document.getElementById('autoSuggestionsToggle');
   const autoOpenNotesToggle = document.getElementById('autoOpenNotesToggle');
   const backFromSettingsBtn = document.getElementById('backFromSettingsBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+
+  // Export overlay elements
+  const exportOverlay = document.getElementById('exportOverlay');
+  const exportTextarea = document.getElementById('exportTextarea');
+  const downloadExportBtn = document.getElementById('downloadExportBtn');
+  const closeExportBtn = document.getElementById('closeExportBtn');
+  const closeExportBtn2 = document.getElementById('closeExportBtn2');
+
+  // Import overlay elements
+  const importOverlay = document.getElementById('importOverlay');
+  const importFileInput = document.getElementById('importFileInput');
+  const overwriteToggle = document.getElementById('overwriteToggle');
+  const importMessage = document.getElementById('importMessage');
+  const doImportBtn = document.getElementById('doImportBtn');
+  const closeImportBtn = document.getElementById('closeImportBtn');
+  const closeImportBtn2 = document.getElementById('closeImportBtn2');
 
   // Detail view elements
   const detailView = document.getElementById('detailView');
@@ -361,6 +379,91 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.sync.set({ __settings: settings });
   }
 
+  // Builds the export JSON string in the same format used by Pteron so that
+  // data can be imported into either extension.
+  async function exportData() {
+    const allData = await chrome.storage.sync.get(null);
+    const exportObj = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      links: {},
+      notes: {},
+      blockedSuggestions: allData['__blockedSuggestions'] || [],
+      settings: allData['__settings'] || {},
+    };
+
+    for (const [key, value] of Object.entries(allData)) {
+      if (key.startsWith('__note_')) {
+        exportObj.notes[key.slice('__note_'.length)] = value;
+      } else if (!key.startsWith('__') && value && typeof value === 'object' && value.url) {
+        exportObj.links[key] = value;
+      }
+    }
+
+    return JSON.stringify(exportObj, null, 2);
+  }
+
+  // Imports data from a JSON string. Accepts the format produced by exportData()
+  // as well as Pteron exports (same format). Returns the number of items written.
+  async function importDataFromJson(jsonText, overwrite) {
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      throw new Error('Invalid JSON file');
+    }
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Invalid format: expected a JSON object');
+    }
+
+    const toSet = {};
+
+    // Accept both current field names and legacy Pteron names (lilyPads/leaflets)
+    const linksData = parsed.links || parsed.lilyPads;
+    const notesData = parsed.notes || parsed.leaflets;
+
+    if (linksData && typeof linksData === 'object') {
+      for (const [keyword, value] of Object.entries(linksData)) {
+        if (!keyword || keyword.startsWith('__') || typeof keyword !== 'string') continue;
+        if (!value || typeof value !== 'object' || !value.url) continue;
+        if (!overwrite) {
+          const existing = await chrome.storage.sync.get(keyword);
+          if (existing[keyword]) continue;
+        }
+        toSet[keyword] = value;
+      }
+    }
+
+    if (notesData && typeof notesData === 'object') {
+      for (const [keyword, noteText] of Object.entries(notesData)) {
+        if (!keyword || keyword.startsWith('__') || typeof keyword !== 'string') continue;
+        if (typeof noteText !== 'string') continue;
+        const noteKey = `__note_${keyword}`;
+        if (!overwrite) {
+          const existing = await chrome.storage.sync.get(noteKey);
+          if (existing[noteKey]) continue;
+        }
+        if (noteText) toSet[noteKey] = noteText;
+      }
+    }
+
+    if (parsed.blockedSuggestions && Array.isArray(parsed.blockedSuggestions)) {
+      const { __blockedSuggestions: existing = [] } = await chrome.storage.sync.get('__blockedSuggestions');
+      toSet['__blockedSuggestions'] = [...new Set([...existing, ...parsed.blockedSuggestions])];
+    }
+
+    if (overwrite && parsed.settings && typeof parsed.settings === 'object') {
+      toSet['__settings'] = parsed.settings;
+    }
+
+    if (Object.keys(toSet).length > 0) {
+      await chrome.storage.sync.set(toSet);
+    }
+
+    return Object.keys(toSet).length;
+  }
+
   // Returns true if every character in searchTerm appears in keyword in order (subsequence match)
   function fuzzyMatchKeyword(keyword, searchTerm) {
     let searchIdx = 0;
@@ -513,6 +616,65 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   autoSuggestionsToggle.addEventListener('change', saveSettings);
   autoOpenNotesToggle.addEventListener('change', saveSettings);
+
+  // Export button — populate textarea and show overlay
+  exportBtn.addEventListener('click', async () => {
+    const json = await exportData();
+    exportTextarea.value = json;
+    exportOverlay.classList.remove('hidden');
+  });
+
+  function closeExportOverlay() {
+    exportOverlay.classList.add('hidden');
+    exportTextarea.value = '';
+  }
+
+  closeExportBtn.addEventListener('click', closeExportOverlay);
+  closeExportBtn2.addEventListener('click', closeExportOverlay);
+
+  downloadExportBtn.addEventListener('click', () => {
+    const blob = new Blob([exportTextarea.value], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quick-links-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Import button — reset state and show overlay
+  importBtn.addEventListener('click', () => {
+    importFileInput.value = '';
+    overwriteToggle.checked = false;
+    importMessage.textContent = '';
+    importMessage.className = 'message';
+    importOverlay.classList.remove('hidden');
+  });
+
+  function closeImportOverlay() {
+    importOverlay.classList.add('hidden');
+  }
+
+  closeImportBtn.addEventListener('click', closeImportOverlay);
+  closeImportBtn2.addEventListener('click', closeImportOverlay);
+
+  doImportBtn.addEventListener('click', async () => {
+    const file = importFileInput.files[0];
+    if (!file) {
+      importMessage.textContent = 'Please select a file first.';
+      importMessage.className = 'message error';
+      return;
+    }
+    try {
+      const text = await file.text();
+      const count = await importDataFromJson(text, overwriteToggle.checked);
+      importMessage.textContent = `Imported ${count} item${count !== 1 ? 's' : ''} successfully.`;
+      importMessage.className = 'message success';
+    } catch (err) {
+      importMessage.textContent = err.message || 'Import failed.';
+      importMessage.className = 'message error';
+    }
+  });
 
   // Notes button in the edit form
   formNotesBtn.addEventListener('click', () => {
