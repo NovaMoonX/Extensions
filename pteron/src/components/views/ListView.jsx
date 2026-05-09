@@ -37,7 +37,9 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
   useEffect(() => {
     if (!syncInitiated.current && Object.keys(pads).length > 0) {
       syncInitiated.current = true;
-      syncVectors(pads, tags).catch(() => {});
+      syncVectors(pads, tags).catch((err) => {
+        console.warn('[Pteron] Background vector sync failed:', err);
+      });
     }
   }, [pads, tags]);
 
@@ -193,8 +195,8 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
       <div className="suggestions-list">
         {Object.keys(pads).length === 0 ? (
           <div className="empty-state">No saved links yet.<br />Type <kbd>p</kbd> + space in the address bar, or <kbd>p/keyword</kbd> directly!</div>
-        ) : filtered.length === 0 && semanticMatches.length === 0 && search ? (
-          <div className="empty-state">No matching links found.</div>
+        ) : filtered.length === 0 && semanticMatches.length === 0 ? (
+          <div className="empty-state">{search ? 'No matching links found.' : 'No links match the active filters.'}</div>
         ) : (
           <>
             {filtered.map((keyword) => renderLinkCard(keyword, pads[keyword]))}
@@ -207,10 +209,6 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
                 </div>
                 {semanticMatches.map(({ keyword }) => renderLinkCard(keyword, pads[keyword], true))}
               </div>
-            )}
-
-            {filtered.length === 0 && !search && (
-              <div className="empty-state">No saved links yet.<br />Type <kbd>p</kbd> + space in the address bar, or <kbd>p/keyword</kbd> directly!</div>
             )}
           </>
         )}

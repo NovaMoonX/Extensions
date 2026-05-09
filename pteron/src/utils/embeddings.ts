@@ -2,6 +2,7 @@
 // Vectors are stored in IndexedDB via vectorStore.ts; text metadata stays in
 // chrome.storage.sync as before.
 
+import type { FeatureExtractionPipeline, FeatureExtractionPipelineOptions, Tensor } from '@huggingface/transformers';
 import { saveVector, getVector, getAllVectors, deleteVector } from './vectorStore.ts';
 
 // ---------------------------------------------------------------------------
@@ -28,15 +29,12 @@ export interface SemanticMatch {
 // Pipeline singleton
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type FeatureExtractionFn = (text: string, options: Record<string, unknown>) => Promise<{ data: Float32Array }>;
-
-let _pipeline: FeatureExtractionFn | null = null;
-let _pipelinePromise: Promise<FeatureExtractionFn> | null = null;
+let _pipeline: FeatureExtractionPipeline | null = null;
+let _pipelinePromise: Promise<FeatureExtractionPipeline> | null = null;
 
 const MODEL_ID = 'Xenova/all-MiniLM-L6-v2';
 
-async function getPipeline(): Promise<FeatureExtractionFn> {
+async function getPipeline(): Promise<FeatureExtractionPipeline> {
   if (_pipeline) return _pipeline;
   if (_pipelinePromise) return _pipelinePromise;
 
@@ -47,7 +45,7 @@ async function getPipeline(): Promise<FeatureExtractionFn> {
     const pipe = await pipeline('feature-extraction', MODEL_ID, {
       dtype: 'fp32',
     });
-    _pipeline = pipe as unknown as FeatureExtractionFn;
+    _pipeline = pipe as FeatureExtractionPipeline;
     return _pipeline;
   })();
 
@@ -80,8 +78,9 @@ export function buildEmbedText(
 /** Generates a normalized embedding vector for the given text. */
 export async function embedText(text: string): Promise<number[]> {
   const pipe = await getPipeline();
-  const output = await pipe(text, { pooling: 'mean', normalize: true });
-  return Array.from(output.data);
+  const options: FeatureExtractionPipelineOptions = { pooling: 'mean', normalize: true };
+  const output: Tensor = await pipe._call(text, options);
+  return Array.from(output.data as Float32Array);
 }
 
 // ---------------------------------------------------------------------------
