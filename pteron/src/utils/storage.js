@@ -3,6 +3,7 @@
 export const KEYS = {
   SETTINGS: '__settings',
   BLOCKED: '__blockedSuggestions',
+  TAGS: '__tags',
   noteKey: (keyword) => `__note_${keyword}`,
 };
 
@@ -62,6 +63,15 @@ export async function saveNote(keyword, text) {
   } else {
     await chrome.storage.sync.remove(key);
   }
+}
+
+export async function getTags() {
+  const { [KEYS.TAGS]: tags = [] } = await chrome.storage.sync.get(KEYS.TAGS);
+  return tags;
+}
+
+export async function saveTags(tags) {
+  await chrome.storage.sync.set({ [KEYS.TAGS]: tags });
 }
 
 export async function keywordExists(keyword) {

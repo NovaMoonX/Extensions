@@ -1444,10 +1444,29 @@ kbd {
 /* === Notes editor wrapper === */
 .notes-editor-wrapper {
   min-height: 120px;
-  max-height: 220px;
-  overflow-y: auto;
+  overflow: auto;
   margin-bottom: 10px;
   border-radius: 12px;
+}
+
+.notes-editor-wrapper--editable {
+  resize: vertical;
+  min-width: 100%;
+  max-width: 100%;
+  height: 160px;
+  min-height: 80px;
+  overflow: hidden;
+}
+
+.notes-editor-wrapper--editable .notes-editor {
+  height: 100%;
+}
+
+.notes-editor-wrapper--editable .notes-editor .tiptap {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .notes-editor-wrapper .notes-editor {
@@ -1489,6 +1508,339 @@ kbd {
 }
 .notes-editor .tiptap a:hover {
   color: #1D4ED8;
+}
+
+/* === Tag chips (shared: filter bar + form selector) === */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid #CBD5E1;
+  border-radius: 20px;
+  background-color: #F1F5F9;
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-chip:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
+  border-color: #94A3B8;
+}
+
+.tag-chip--active {
+  background-color: #2563EB;
+  color: #FFFFFF;
+  border-color: #2563EB;
+}
+
+.tag-chip--active:hover {
+  background-color: #1D4ED8;
+  border-color: #1D4ED8;
+}
+
+/* === Tag Filter Section (ListView) === */
+.tag-filter-section {
+  margin-bottom: 10px;
+}
+
+.tag-filter-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+
+.tag-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.tag-filter-bar--expanded {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
+.tag-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 5px;
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  color: #2563EB;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-filter-toggle:hover {
+  color: #1D4ED8;
+  background: none;
+}
+
+/* === Tag Selector (FormView) === */
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  margin-top: 6px;
+}
+
+/* === Form title row (with trash icon) === */
+.form-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.form-title-row h2 {
+  margin-bottom: 12px;
+}
+
+.form-delete-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: #ef4444;
+  cursor: pointer;
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: auto;
+  transition: background-color 0.15s, color 0.15s;
+  margin-bottom: 12px;
+}
+
+.form-delete-icon-btn:hover {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* === Tag section header (label + New tag button) === */
+.tag-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tag-add-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: none;
+  border: 1px solid #CBD5E1;
+  border-radius: 20px;
+  color: #2563EB;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: auto;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.tag-add-inline-btn:hover {
+  background-color: #EFF6FF;
+  border-color: #93C5FD;
+}
+
+.tag-inline-create-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tag-inline-create-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.tag-empty-hint {
+  font-size: 12px;
+  color: #94A3B8;
+  padding: 6px 2px;
+}
+
+/* === Tag Manager View === */
+#tagManagerView {
+  padding-bottom: 8px;
+}
+
+.tag-create-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tag-create-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-create-btn {
+  padding: 8px 14px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-create-btn:hover {
+  background-color: #1D4ED8;
+}
+
+.tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  gap: 8px;
+  min-height: 38px;
+}
+
+.tag-item-label {
+  flex: 1;
+  font-size: 14px;
+  color: #0F172A;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tag-rename-btn {
+  padding: 4px 10px;
+  background-color: #E2E8F0;
+  color: #0F172A;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-rename-btn:hover {
+  background-color: #CBD5E1;
+}
+
+.tag-delete-btn {
+  padding: 4px 10px;
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-delete-btn:hover {
+  background-color: #fee2e2;
+  border-color: #ef4444;
+}
+
+.tag-edit-form {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  align-items: center;
+}
+
+.tag-edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.tag-save-btn {
+  padding: 4px 10px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-save-btn:hover {
+  background-color: #1D4ED8;
+}
+
+.tag-cancel-edit-btn {
+  padding: 4px 8px;
+  background-color: transparent;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  flex-grow: 0;
+  width: auto;
+}
+
+.tag-cancel-edit-btn:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
 }
 
 /* dark mode toolbar and editor */
@@ -1549,5 +1901,103 @@ kbd {
   .copy-icon-btn:hover {
     background-color: #273549;
     color: #e0e0e0;
+  }
+
+  /* Tag dark mode */
+  .tag-chip {
+    background-color: #1E293B;
+    border-color: #334155;
+    color: #94A3B8;
+  }
+
+  .tag-chip:hover {
+    background-color: #273549;
+    color: #e0e0e0;
+    border-color: #64748B;
+  }
+
+  .tag-chip--active {
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border-color: #2563EB;
+  }
+
+  .tag-chip--active:hover {
+    background-color: #1D4ED8;
+    border-color: #1D4ED8;
+  }
+
+  .tag-selector {
+    background-color: #1E293B;
+    border-color: #334155;
+  }
+
+  .tag-item {
+    background-color: #1E293B;
+    border-color: #334155;
+  }
+
+  .tag-item-label {
+    color: #e0e0e0;
+  }
+
+  .tag-rename-btn {
+    background-color: #273549;
+    color: #e0e0e0;
+  }
+
+  .tag-rename-btn:hover {
+    background-color: #334155;
+  }
+
+  .tag-delete-btn {
+    color: #f87171;
+    border-color: #7f1d1d;
+  }
+
+  .tag-delete-btn:hover {
+    background-color: #3d1f1f;
+    border-color: #f87171;
+  }
+
+  .tag-cancel-edit-btn {
+    color: #64748B;
+    border-color: #334155;
+  }
+
+  .tag-cancel-edit-btn:hover {
+    background-color: #273549;
+    color: #e0e0e0;
+  }
+
+  .form-delete-icon-btn {
+    color: #f87171;
+  }
+
+  .form-delete-icon-btn:hover {
+    background-color: #3d1f1f;
+    color: #f87171;
+  }
+
+  .tag-add-inline-btn {
+    color: #93C5FD;
+    border-color: #1E3A8A;
+  }
+
+  .tag-add-inline-btn:hover {
+    background-color: #1E293B;
+    border-color: #93C5FD;
+  }
+
+  .tag-empty-hint {
+    color: #64748B;
+  }
+
+  .tag-filter-toggle {
+    color: #93C5FD;
+  }
+
+  .tag-filter-toggle:hover {
+    color: #BFDBFE;
   }
 }

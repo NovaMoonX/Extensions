@@ -23,6 +23,10 @@ Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Not
 🔍 Instant Search
 Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast.
 
+🏷️ Tag-Based Organisation
+Assign one or more tags to any link and filter your collection in an instant. Create and rename tags in Settings → Tag Manager. Click any tag chip above the link list to narrow down results — combine multiple tags for precise filtering.
+Tag chips in the main list now collapse based on total label length, so the "+ more" count is more consistent regardless of short or long tag names.
+
 📤 Export & Import
 Take your links with you. Export all your saved links and notes as a JSON file. Import from another device — choose whether to overwrite existing data or only fill in gaps.
 
@@ -37,6 +41,16 @@ Give your browser wings.
 ---
 
 Version History
+
+1.3
+- Improved tag filter collapsing: the "+ more" threshold now uses total tag label characters instead of a fixed number of chips
+- Improved edit form tagging flow: pressing Enter while focused in the New tag input adds that tag instead of submitting the whole link form
+- Improved Notes editor resizing in edit mode with reliable vertical expansion
+
+1.2
+- Tag-based organisation: create tags in Settings → Tag Manager, assign multiple tags to any link, and filter your saved links by tag in the main view
+- Tags use stable unique IDs so renaming a tag never breaks existing associations
+- Tags are synced via Chrome Sync alongside links
 
 1.1
 - Rich text notes: bold, italic, underline, strikethrough, bullet lists, numbered lists, and links

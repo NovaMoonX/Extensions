@@ -7,6 +7,7 @@ import BlockedView from './views/BlockedView.jsx';
 import SettingsView from './views/SettingsView.jsx';
 import DetailView from './views/DetailView.jsx';
 import NotesView from './views/NotesView.jsx';
+import TagManagerView from './views/TagManagerView.jsx';
 import ExportDialog from './dialogs/ExportDialog.jsx';
 import ImportDialog from './dialogs/ImportDialog.jsx';
 
@@ -78,6 +79,12 @@ export default function App() {
           onBack={() => navigate('list')}
           onExport={() => setExportOpen(true)}
           onImport={() => setImportOpen(true)}
+          onManageTags={() => navigate('tags')}
+        />
+      )}
+      {view === 'tags' && (
+        <TagManagerView
+          onBack={() => navigate('settings')}
         />
       )}
       {view === 'detail' && (

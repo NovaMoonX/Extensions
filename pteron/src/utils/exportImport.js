@@ -7,6 +7,7 @@ export async function exportData() {
     exportedAt: new Date().toISOString(),
     links: {},
     notes: {},
+    tags: allData['__tags'] || [],
     blockedSuggestions: allData['__blockedSuggestions'] || [],
     settings: allData['__settings'] || {},
   };
@@ -68,6 +69,17 @@ export async function importData(jsonText, overwrite) {
   if (parsed.blockedSuggestions && Array.isArray(parsed.blockedSuggestions)) {
     const { __blockedSuggestions: existing = [] } = await chrome.storage.sync.get('__blockedSuggestions');
     toSet['__blockedSuggestions'] = [...new Set([...existing, ...parsed.blockedSuggestions])];
+  }
+
+  if (parsed.tags && Array.isArray(parsed.tags)) {
+    const { __tags: existing = [] } = await chrome.storage.sync.get('__tags');
+    if (overwrite) {
+      toSet['__tags'] = parsed.tags;
+    } else {
+      const existingIds = new Set(existing.map((t) => t.id));
+      const newTags = parsed.tags.filter((t) => t && t.id && t.label && !existingIds.has(t.id));
+      if (newTags.length > 0) toSet['__tags'] = [...existing, ...newTags];
+    }
   }
 
   if (overwrite && parsed.settings && typeof parsed.settings === 'object') {

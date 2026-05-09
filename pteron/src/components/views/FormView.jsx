@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { saveLink, deleteLink, getLink, keywordExists } from '../../utils/storage.js';
+import { saveLink, deleteLink, getLink, keywordExists, getTags, saveTags } from '../../utils/storage.js';
 import { extractSuggestionFieldsFromTitle, stripQueryParams } from '../../utils/url.js';
 import ShortcutHint from '../ui/ShortcutHint.jsx';
-import { FileText } from '../ui/Icons.jsx';
+import { FileText, Trash2, Plus } from '../ui/Icons.jsx';
 
 async function getKeywordError(keyword, editingKeyword) {
   if (keyword.startsWith('__')) {
@@ -23,10 +23,20 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
   const [keywordWarning, setKeywordWarning] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [originalUrlWithParams, setOriginalUrlWithParams] = useState(null);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [newTagLabel, setNewTagLabel] = useState('');
+  const [showNewTagInput, setShowNewTagInput] = useState(false);
+  const [newTagError, setNewTagError] = useState('');
   const descRef = useRef(null);
   const keywordRef = useRef(null);
+  const newTagRef = useRef(null);
 
   const isEdit = !!editingKeyword;
+
+  useEffect(() => {
+    getTags().then(setAvailableTags);
+  }, []);
 
   useEffect(() => {
     async function initForm() {
@@ -36,6 +46,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
           setUrl(pad.url);
           setKeyword(editingKeyword);
           setDescription(pad.description || '');
+          setSelectedTagIds(pad.tagIds || []);
         }
         setTimeout(() => descRef.current?.focus(), 0);
       } else if (prefillData) {
@@ -116,6 +127,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         description: desc || kw,
         timesUsed: existing?.timesUsed || 0,
         lastUsed: existing?.lastUsed || Date.now(),
+        tagIds: selectedTagIds,
       });
       await chrome.storage.session.remove('pendingUrl');
       setMessage({ text: isEdit ? 'Link updated!' : 'Link saved!', type: 'success' });
@@ -139,9 +151,44 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
     });
   }
 
+  async function handleCreateTag(e) {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    const label = newTagLabel.trim();
+    if (!label) { setNewTagError('Tag name cannot be empty.'); return; }
+    if (availableTags.some((t) => t.label.toLowerCase() === label.toLowerCase())) {
+      setNewTagError('A tag with this name already exists.');
+      return;
+    }
+    setNewTagError('');
+    const newTag = { id: crypto.randomUUID(), label };
+    const updated = [...availableTags, newTag];
+    await saveTags(updated);
+    setAvailableTags(updated);
+    setSelectedTagIds([...selectedTagIds, newTag.id]);
+    setNewTagLabel('');
+    setShowNewTagInput(false);
+  }
+
+  function handleToggleNewTagInput() {
+    setShowNewTagInput((v) => !v);
+    setNewTagError('');
+    setNewTagLabel('');
+    if (!showNewTagInput) {
+      setTimeout(() => newTagRef.current?.focus(), 0);
+    }
+  }
+
   return (
     <div id="formView">
-      <h2 id="formTitle">{isEdit ? 'Edit Link' : 'Save New Link'}</h2>
+      <div className="form-title-row">
+        <h2 id="formTitle">{isEdit ? 'Edit Link' : 'Save New Link'}</h2>
+        {isEdit && (
+          <button type="button" className="form-delete-icon-btn" title="Delete this link" onClick={handleDelete}>
+            <Trash2 size={16} strokeWidth={2} />
+          </button>
+        )}
+      </div>
 
       {message.text && (
         <div className={`message ${message.type}`}>{message.text}</div>
@@ -162,7 +209,7 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
         </div>
 
         <div className="form-group">
-          <label htmlFor="keyword">Keyword <span style={{ color: '#666' }}>(required)</span></label>
+          <label htmlFor="keyword">Keyword</label>
           <input id="keyword" ref={keywordRef} type="text" required placeholder="e.g., myapp"
             value={keyword}
             onChange={(e) => { setKeyword(e.target.value); validateKeyword(e.target.value, editingKeyword); }} />
@@ -177,13 +224,74 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
             value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
+        <div className="form-group">
+          <div className="tag-section-header">
+            <label style={{ margin: 0 }}>Tags</label>
+            <button
+              type="button"
+              className="tag-add-inline-btn"
+              onClick={handleToggleNewTagInput}
+              title="Create new tag"
+            >
+              <Plus size={13} strokeWidth={2.5} />
+              New tag
+            </button>
+          </div>
+
+          {showNewTagInput && (
+            <div className="tag-inline-create-form" role="group" aria-label="Create new tag">
+              <input
+                ref={newTagRef}
+                type="text"
+                placeholder="Tag name…"
+                value={newTagLabel}
+                onChange={(e) => { setNewTagLabel(e.target.value); setNewTagError(''); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateTag(e);
+                  }
+                }}
+                className="tag-inline-create-input"
+              />
+              <button type="button" className="tag-save-btn" onClick={handleCreateTag}>Add</button>
+              <button type="button" className="tag-cancel-edit-btn" onClick={() => { setShowNewTagInput(false); setNewTagError(''); }}>✕</button>
+            </div>
+          )}
+          {newTagError && <div className="keyword-warning" style={{ marginTop: 4 }}>{newTagError}</div>}
+
+          {availableTags.length > 0 && (
+            <div className="tag-selector">
+              {availableTags.map((tag) => {
+                const active = selectedTagIds.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className={`tag-chip${active ? ' tag-chip--active' : ''}`}
+                    onClick={() =>
+                      setSelectedTagIds(
+                        active
+                          ? selectedTagIds.filter((id) => id !== tag.id)
+                          : [...selectedTagIds, tag.id]
+                      )
+                    }
+                  >
+                    {tag.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {availableTags.length === 0 && !showNewTagInput && (
+            <div className="tag-empty-hint">No tags yet — click "+ New tag" to create one.</div>
+          )}
+        </div>
+
         <div className="button-group">
           <button type="submit" className="save">{isEdit ? 'Update' : 'Save'}</button>
           <button type="button" className="cancel" onClick={handleCancel}>Cancel</button>
         </div>
-        {isEdit && (
-          <button type="button" className="delete-link" onClick={handleDelete}>Delete This Link</button>
-        )}
       </form>
 
       {isEdit && editingKeyword && (
@@ -197,3 +305,4 @@ export default function FormView({ editingKeyword, prefillData, pendingUrl, pend
     </div>
   );
 }
+

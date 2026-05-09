@@ -195,7 +195,7 @@ export default function NotesView({ keyword, fromDetail, onBack, onCreateLink })
             </div>
           )}
 
-          <div className={`notes-editor-wrapper${!editMode ? ' notes-editor-readonly' : ''}`}>
+          <div className={`notes-editor-wrapper${!editMode ? ' notes-editor-readonly' : ' notes-editor-wrapper--editable'}`}>
             {!editMode && !savedContent ? (
               <div className="notes-text-display empty">No notes yet.</div>
             ) : (

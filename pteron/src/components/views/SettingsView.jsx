@@ -3,7 +3,7 @@ import { getSettings, saveSettings } from '../../utils/storage.js';
 import ViewHeader from '../ui/ViewHeader.jsx';
 import ToggleSwitch from '../ui/ToggleSwitch.jsx';
 
-export default function SettingsView({ onBack, onExport, onImport }) {
+export default function SettingsView({ onBack, onExport, onImport, onManageTags }) {
   const [autoSuggestions, setAutoSuggestions] = useState(true);
   const [autoOpenLeaflets, setAutoOpenLeaflets] = useState(true);
 
@@ -43,6 +43,13 @@ export default function SettingsView({ onBack, onExport, onImport }) {
             <div className="setting-description">Automatically open the Notes panel when you land on a page with saved notes</div>
           </div>
           <ToggleSwitch checked={autoOpenLeaflets} onChange={handleAutoOpenLeafletsChange} />
+        </div>
+        <div className="setting-item setting-item--action">
+          <div className="setting-info">
+            <div className="setting-label">Manage Tags</div>
+            <div className="setting-description">Create, rename, and delete tags to organise your links</div>
+          </div>
+          <button className="action-btn" onClick={onManageTags}>Tags</button>
         </div>
         <div className="setting-item setting-item--action">
           <div className="setting-info">
