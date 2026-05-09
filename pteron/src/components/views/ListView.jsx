@@ -71,14 +71,14 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
         const matches = await semanticSearch(search.trim(), filtered);
         // Only keep results that correspond to links still in pads
         setSemanticMatches(matches.filter((m) => pads[m.keyword]));
-      } catch {
+      } catch (err) {
+        console.warn('[Pteron] Semantic search failed:', err);
         setSemanticMatches([]);
       }
     }, 400);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, pads]);
+  }, [search, pads, filtered]);
 
   async function handleCopy(e, url) {
     e.stopPropagation();
