@@ -1,0 +1,50 @@
+Pteron — Shortcut your browser.
+
+Give your browser wings.
+
+Stop crawling through folders and typing full URLs. Pteron turns your address bar into a command center. Inspired by the wings of ancient myth and built for modern speed, it's the lightest way to navigate the web.
+
+Type "p" in the address bar, add your keyword, and press Enter. Your saved links are one keystroke away. You can also type p/<keyword> directly — no activation step required.
+
+What You Get:
+
+⚡ The p/ Trigger
+The fastest way to move. Type p/ + your keyword in the address bar to go anywhere instantly. Zero friction, maximum speed.
+
+📝 Contextual Notes
+Attach notes to any saved link. They appear the moment you land on the site, keeping your info ready when you need it. Toggle auto-open in Settings.
+
+🎯 Smart Suggestions
+Visit a site frequently? Pteron suggests saving it automatically, with a keyword drawn from the page title. Accept, edit, or block — you're in control.
+
+⌨️ Keyboard Shortcuts
+Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+M (Windows/Linux) or Alt+Shift+M (Mac).
+
+🔍 Instant Search
+Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast.
+
+📤 Export & Import
+Take your links with you. Export all your saved links and notes as a JSON file. Import from another device — choose whether to overwrite existing data or only fill in gaps.
+
+🔒 Private & Secure
+Everything stays on your device — no external servers, no tracking. Your links and browsing patterns are yours alone.
+
+☁️ Synced Across Devices
+Your links automatically sync to your Google account via Chrome Sync. Access the same shortcuts on every device where you're signed in.
+
+Give your browser wings.
+
+---
+
+Version History
+
+1.0
+- Pteron launch
+- Cross-browser support (Chrome, Firefox, Edge)
+- p/<keyword> direct navigation pattern
+- Aegean design system: Pteron Blue (#2563EB)
+- Contextual Notes system
+- Export/Import all links and notes to JSON
+- Smart auto-suggestions from page titles
+- All internal storage keys use __ prefix
+- Keywords starting with __ are blocked
