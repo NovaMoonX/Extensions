@@ -20,10 +20,10 @@ Visit a site frequently? Pteron suggests saving it automatically, with a keyword
 ⌨️ Keyboard Shortcuts
 Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac). Open your saved links list directly: Alt+Shift+P (Windows/Linux) or Alt+P (Mac). The popup now includes a discreet "View keyboard shortcuts" link that opens a dedicated shortcuts screen.
 
-🔍 Instant Search
-Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast.
+🔍 Instant Search + Semantic Discovery
+Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast. In the omnibox, Pteron now also falls back to semantic matches when exact or fuzzy lookup comes up short. When there's no obvious keyword match, the on-device AI model surfaces semantically similar links below a "• semantic" marker — so the right link is never more than a few words away.
 
-🏷️ Tag-Based Organisation
+🏷️ Tag-Based Organization
 Assign one or more tags to any link and filter your collection in an instant. Create and rename tags in Settings → Tag Manager. Click any tag chip above the link list to narrow down results — combine multiple tags for precise filtering.
 Tag chips in the main list now collapse based on total label length, so the "+ more" count is more consistent regardless of short or long tag names.
 
@@ -44,6 +44,11 @@ Give your browser wings.
 ---
 
 Version History
+
+1.5
+- Semantic search: on-device AI (all-MiniLM-L6-v2 via Transformers.js) embeds every saved link as a vector stored in IndexedDB
+- Fuzzy/substring matches appear instantly; semantic "best guess" results surface below a ✨ divider when no keyword match is found
+- Vectors are generated and cached locally in the background — no data leaves your device
 
 1.4
 - AI Pilot: on Chrome 126+ Pteron automatically refines keyword, description and tags for new links using on-device Gemini Nano — no data sent to external servers

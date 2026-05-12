@@ -1,0 +1,20 @@
+Semantic Search Mock Fixture
+
+This fixture is meant for manual import during suggestion testing.
+
+What it contains:
+- A small set of tagged mock links that produce meaningful semantic matches.
+- Three example queries that should only rank through semantic similarity, not exact, substring, or fuzzy matching.
+
+Recommended use:
+- Import the JSON file `semantic-search.mock.json` into a local test harness.
+- Seed the mock `links` and `tags` into storage, then type one of the sample queries in the Saved Links search box.
+
+Expected behavior:
+- `browser extension guide` should surface the `docs` link first.
+- `go-live timeline` should surface the `roadmap` link first.
+- `pantry restock` should surface the `recipes` link first.
+
+Note:
+- None of these query strings should appear verbatim in the keywords, descriptions, or URLs.
+- If a query starts matching by substring or fuzzy rules, change the text so it remains a semantic-only test.

@@ -15,6 +15,51 @@ export default defineBackground(() => {
 	const SUGGESTIONS_PROMPT_NONE =
 		'No saved links yet. Enter a URL to save your first link, or search the web.';
 
+	async function ensureOffscreenExists() {
+		try {
+			if (await chrome.offscreen.hasDocument()) return;
+		} catch {
+			// hasDocument() is not available in all manifest versions
+		}
+
+		try {
+			await chrome.offscreen.createDocument({
+				url: '/offscreen.html',
+				reasons: ['LOCAL_STORAGE'],
+				justification: 'Running semantic search inference for omnibox suggestions',
+			});
+		} catch (err) {
+			console.warn('[Pteron] Failed to create offscreen document:', err);
+		}
+	}
+
+	async function queryOffscreenSemanticSearch(query, excludeKeywords) {
+		await ensureOffscreenExists();
+
+		return new Promise((resolve) => {
+			chrome.runtime.sendMessage(
+				{
+					type: 'SEMANTIC_SEARCH',
+					query,
+					excludeKeywords,
+					threshold: 0.35,
+					limit: 5,
+				},
+				(response) => {
+					if (chrome.runtime.lastError) {
+						console.warn('[Pteron] Offscreen message error:', chrome.runtime.lastError);
+						resolve([]);
+					} else if (response?.success) {
+						resolve(response.results || []);
+					} else {
+						console.warn('[Pteron] Offscreen response failed:', response?.error);
+						resolve([]);
+					}
+				},
+			);
+		});
+	}
+
 	// Migrate legacy non-keyword storage keys to the __ prefix convention so that
 	// user-defined keywords can never accidentally overwrite internal app state.
 	// Also migrates from Quick Links (old extension) format.
@@ -241,21 +286,48 @@ export default defineBackground(() => {
 			return bScore - aScore;
 		});
 
-		const exactMatch = filteredSuggestions.find(
+		// Add semantic search results if exact/fuzzy matching left room
+		const semanticSuggestions = [];
+		if (filteredSuggestions.length < 10) {
+			try {
+				const semanticMatches = await queryOffscreenSemanticSearch(
+					trimmedInput,
+					filteredSuggestions.map((s) => s.content),
+				);
+				for (const match of semanticMatches) {
+					const item = allItems[match.keyword];
+					if (!item || typeof item !== 'object' || Array.isArray(item) || !item.url) continue;
+					const escapedUrl = escapeXml(item.url);
+					const urlDim = `<dim> ★ <url>${escapedUrl}</url></dim>`;
+					semanticSuggestions.push({
+						content: match.keyword,
+						description: `${escapeXml(match.keyword)} - ${escapeXml(item.description || '')}<dim> ★ semantic</dim>${urlDim}`,
+						matchScore: -1,
+						fuzzyMatchStart: -1,
+					});
+				}
+			} catch (err) {
+				console.warn('[Pteron] Semantic search failed:', err);
+			}
+		}
+
+		const combinedSuggestions = [...filteredSuggestions, ...semanticSuggestions];
+
+		const exactMatch = combinedSuggestions.find(
 			(suggestion) => suggestion.content.toLowerCase() === trimmedInput.toLowerCase(),
 		);
 
 		if (exactMatch) {
 			await chrome.omnibox.setDefaultSuggestion({ description: exactMatch.description });
-			const otherSuggestions = filteredSuggestions.filter(
+			const otherSuggestions = combinedSuggestions.filter(
 				(suggestion) => suggestion.content.toLowerCase() !== trimmedInput.toLowerCase(),
 			);
 			suggest(formatSuggestions(otherSuggestions.slice(0, 10)));
-		} else if (filteredSuggestions.length === 0) {
+		} else if (combinedSuggestions.length === 0) {
 			await chrome.omnibox.setDefaultSuggestion({ description: SUGGESTIONS_PROMPT_NONE });
 			suggest([]);
 		} else {
-			const topMatch = filteredSuggestions[0];
+			const topMatch = combinedSuggestions[0];
 			await chrome.omnibox.setDefaultSuggestion({ description: topMatch.description });
 			await chrome.storage.session.set({
 				topSuggestion: {
@@ -263,7 +335,7 @@ export default defineBackground(() => {
 					url: allItems[topMatch.content]?.url,
 				},
 			});
-			const otherSuggestions = filteredSuggestions.slice(1);
+			const otherSuggestions = combinedSuggestions.slice(1);
 			suggest(formatSuggestions(otherSuggestions.slice(0, 10)));
 		}
 	});
