@@ -2,7 +2,7 @@
 // Vectors are stored in IndexedDB via vectorStore.ts; text metadata stays in
 // chrome.storage.sync as before.
 
-import type { FeatureExtractionPipeline, FeatureExtractionPipelineOptions, Tensor } from '@huggingface/transformers';
+import type { FeatureExtractionPipeline, Tensor } from '@huggingface/transformers';
 import { saveVector, getVector, getAllVectors, deleteVector } from './vectorStore.ts';
 
 // ---------------------------------------------------------------------------
@@ -42,6 +42,19 @@ async function getPipeline(): Promise<FeatureExtractionPipeline> {
     const { pipeline, env } = await import('@huggingface/transformers');
     // Disable local model lookup; always fetch from Hugging Face Hub
     env.allowLocalModels = false;
+    const ortEnv = env as {
+      backends?: {
+        onnx?: {
+          wasm?: {
+            wasmPaths?: string;
+          };
+        };
+      };
+    };
+    ortEnv.backends ??= {};
+    ortEnv.backends.onnx ??= {};
+    ortEnv.backends.onnx.wasm ??= {};
+    ortEnv.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL('ort/');
     const pipe = await pipeline('feature-extraction', MODEL_ID, {
       dtype: 'fp32',
     });
@@ -78,8 +91,7 @@ export function buildEmbedText(
 /** Generates a normalized embedding vector for the given text. */
 export async function embedText(text: string): Promise<number[]> {
   const pipe = await getPipeline();
-  const options: FeatureExtractionPipelineOptions = { pooling: 'mean', normalize: true };
-  const output: Tensor = await pipe._call(text, options);
+  const output: Tensor = await pipe._call(text, { pooling: 'mean', normalize: true });
   return Array.from(output.data as Float32Array);
 }
 
@@ -169,7 +181,7 @@ export async function semanticSearch(
   const queryVector = await embedText(query);
   const excludeSet = new Set(excludeKeywords);
 
-  return allVectors
+  const matches = allVectors
     .filter((v) => !excludeSet.has(v.keyword))
     .map((v) => ({
       keyword: v.keyword,
@@ -178,4 +190,6 @@ export async function semanticSearch(
     .filter((m) => m.score >= threshold)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+
+  return matches;
 }

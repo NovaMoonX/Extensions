@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "exportedAt": "2026-05-11T00:00:00.000Z",
+  "links": {
+    "docs": {
+      "url": "https://developer.chrome.com/docs/extensions/",
+      "description": "Chrome extension docs, manifests, service workers, and debugging tips.",
+      "tagIds": ["docs", "work"]
+    },
+    "roadmap": {
+      "url": "https://linear.app/acme/roadmap",
+      "description": "Team roadmap, feature planning, and release tracking.",
+      "tagIds": ["work"]
+    },
+    "recipes": {
+      "url": "https://example.com/meal-planner",
+      "description": "Weekly meal ideas, grocery lists, and kitchen notes.",
+      "tagIds": ["personal"]
+    },
+    "semantic-search-notes": {
+      "url": "https://example.com/search-lab",
+      "description": "Experiment notes for embedding similarity, ranking, and result tuning.",
+      "tagIds": ["docs", "work"]
+    }
+  },
+  "notes": {},
+  "tags": [
+    { "id": "docs", "label": "Documentation" },
+    { "id": "work", "label": "Work" },
+    { "id": "personal", "label": "Personal" }
+  ],
+  "blockedSuggestions": [],
+  "settings": {},
+  "queries": [
+    "browser extension guide",
+    "go-live timeline",
+    "pantry restock"
+  ]
+}

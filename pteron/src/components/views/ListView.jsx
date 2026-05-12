@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getLinks, getBlockedSuggestions, getTags } from '../../utils/storage.js';
 import { syncVectors, semanticSearch } from '../../utils/embeddings.ts';
 import { Copy, Check, Settings, ChevronDown, ChevronUp, Sparkles } from '../ui/Icons.jsx';
@@ -43,7 +43,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
     }
   }, [pads, tags]);
 
-  const filtered = (() => {
+  const filtered = useMemo(() => {
     const keys = Object.keys(pads);
     // Tag filter: if any tag is selected, only show links that have at least one
     const tagFiltered = activeTagIds.length === 0
@@ -59,7 +59,7 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
     );
     const fuzzy = tagFiltered.filter(k => !sub.includes(k) && fuzzyMatch(k.toLowerCase(), s));
     return [...sub, ...fuzzy];
-  })();
+  }, [pads, search, activeTagIds]);
 
   // Debounced semantic search — runs 400 ms after the user stops typing
   useEffect(() => {
@@ -72,7 +72,8 @@ export default function ListView({ onAddNew, onEditItem, onViewDetail, onViewBlo
       try {
         const matches = await semanticSearch(search.trim(), filtered);
         // Only keep results that correspond to links still in pads
-        setSemanticMatches(matches.filter((m) => pads[m.keyword]));
+        const visibleMatches = matches.filter((m) => pads[m.keyword]);
+        setSemanticMatches(visibleMatches);
       } catch (err) {
         console.warn('[Pteron] Semantic search failed:', err);
         setSemanticMatches([]);
