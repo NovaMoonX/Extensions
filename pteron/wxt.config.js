@@ -7,7 +7,7 @@ export default defineConfig({
     name: 'Pteron: Shortcut your browser',
     description: 'Turns your address bar into a command center. Save links, navigate with p/keyword, attach notes, and sync across devices.',
     version: '1.5.0',
-    permissions: ['storage', 'webNavigation', 'tabs', 'scripting'],
+    permissions: ['storage', 'webNavigation', 'tabs', 'scripting', 'offscreen'],
     host_permissions: ['<all_urls>'],
     omnibox: { keyword: 'p' },
     icons: {

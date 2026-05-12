@@ -21,7 +21,7 @@ Visit a site frequently? Pteron suggests saving it automatically, with a keyword
 Save the current page instantly: Ctrl+L (Windows/Linux) or Alt+L (Mac). Open Notes for the current page: Ctrl+Shift+L (Windows/Linux) or Alt+Shift+L (Mac). Open your saved links list directly: Alt+Shift+P (Windows/Linux) or Alt+P (Mac). The popup now includes a discreet "View keyboard shortcuts" link that opens a dedicated shortcuts screen.
 
 🔍 Instant Search + Semantic Discovery
-Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast. When there's no obvious keyword match, Pteron's on-device AI model finds semantically similar links and surfaces them below a "✨ Best guess" divider — so the right link is never more than a few words away.
+Can't remember the keyword? Search by URL, keyword, or description. Real-time filtering with fuzzy matching finds what you need fast. In the omnibox, Pteron now also falls back to semantic matches when exact or fuzzy lookup comes up short. When there's no obvious keyword match, the on-device AI model surfaces semantically similar links below a "• semantic" marker — so the right link is never more than a few words away.
 
 🏷️ Tag-Based Organization
 Assign one or more tags to any link and filter your collection in an instant. Create and rename tags in Settings → Tag Manager. Click any tag chip above the link list to narrow down results — combine multiple tags for precise filtering.
